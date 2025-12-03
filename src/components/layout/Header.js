@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 
 export default function Header() {
@@ -11,8 +12,14 @@ export default function Header() {
             <div className="container py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="text-2xl font-bold tracking-wider">
-                        TURQUOISE
+                    <Link href="/" className="relative h-12 w-48">
+                        <Image
+                            src="/TQ-Full.webp"
+                            alt="Turquoise Holidays"
+                            fill
+                            className="object-contain"
+                            priority
+                        />
                     </Link>
 
                     {/* Desktop Navigation */}

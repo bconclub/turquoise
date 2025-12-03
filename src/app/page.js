@@ -11,11 +11,12 @@ export default function Home() {
         {/* Hero Section */}
         <section className="relative h-screen flex items-center justify-center text-white overflow-hidden">
           <Image
-            src="/hero-beach.png"
-            alt="Tropical beach destination"
+            src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070"
+            alt="Tropical beach destination with longtail boats"
             fill
             className="object-cover"
             priority
+            unoptimized
           />
           <div className="absolute inset-0 bg-black/40 z-10" />
 
@@ -62,10 +63,11 @@ export default function Home() {
               {/* Large Featured Destination */}
               <div className="md:row-span-2 relative h-[500px] rounded-3xl overflow-hidden group cursor-pointer">
                 <Image
-                  src="/dest-matterhorn.png"
-                  alt="Switzerland Alps"
+                  src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?q=80&w=2070"
+                  alt="Switzerland Alps - Matterhorn"
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -77,10 +79,11 @@ export default function Home() {
               {/* Temple Destination */}
               <div className="relative h-[240px] rounded-3xl overflow-hidden group cursor-pointer">
                 <Image
-                  src="/dest-temple.png"
-                  alt="Ancient Temples"
+                  src="https://images.unsplash.com/photo-1563492065213-f6de1a1e0a6f?q=80&w=2070"
+                  alt="Ancient Buddhist Temple Thailand"
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -92,10 +95,11 @@ export default function Home() {
               {/* Balloon Destination */}
               <div className="relative h-[240px] rounded-3xl overflow-hidden group cursor-pointer">
                 <Image
-                  src="/dest-balloon.png"
-                  alt="Cappadocia"
+                  src="https://images.unsplash.com/photo-1609137144813-7d9921338f24?q=80&w=2070"
+                  alt="Cappadocia Hot Air Balloons Turkey"
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -107,10 +111,11 @@ export default function Home() {
               {/* Islands Destination */}
               <div className="md:col-span-2 relative h-[240px] rounded-3xl overflow-hidden group cursor-pointer">
                 <Image
-                  src="/dest-islands.png"
-                  alt="Maldives Islands"
+                  src="https://images.unsplash.com/photo-1514282401047-d79a71a590e8?q=80&w=2065"
+                  alt="Maldives Tropical Islands"
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -136,7 +141,14 @@ export default function Home() {
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="relative h-[350px] rounded-3xl overflow-hidden group cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-pink-600" />
+                <Image
+                  src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071"
+                  alt="Vibrant City Experience"
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white p-6">
                     <h3 className="text-3xl font-bold mb-3">Vibrant Cities</h3>
@@ -145,7 +157,15 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="relative h-[350px] rounded-3xl overflow-hidden group cursor-pointer bg-gradient-to-br from-amber-700 to-orange-900">
+              <div className="relative h-[350px] rounded-3xl overflow-hidden group cursor-pointer">
+                <Image
+                  src="https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=2071"
+                  alt="Historic Travel Experience"
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white p-6">
                     <h3 className="text-3xl font-bold mb-3">Historic Travel</h3>
@@ -154,7 +174,15 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="relative h-[350px] rounded-3xl overflow-hidden group cursor-pointer bg-gradient-to-br from-yellow-600 to-red-700">
+              <div className="relative h-[350px] rounded-3xl overflow-hidden group cursor-pointer">
+                <Image
+                  src="https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?q=80&w=2070"
+                  alt="Desert Safari Experience"
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white p-6">
                     <h3 className="text-3xl font-bold mb-3">Desert Safari</h3>
@@ -222,7 +250,14 @@ export default function Home() {
                 </div>
               </div>
               <div className="relative h-[500px] rounded-3xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-turquoise-400 to-turquoise-800"></div>
+                <Image
+                  src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070"
+                  alt="Mountain landscape at sunset"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-turquoise-600/20"></div>
               </div>
             </div>
           </div>
@@ -241,13 +276,24 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              {[
+                'photo-1488646953014-85cb44e25828',
+                'photo-1469854523086-cc02fe5d8800',
+                'photo-1476514525535-07fb3b4ae5f1',
+                'photo-1530789253388-582c481c54b0',
+                'photo-1503220317375-aaad61436b1b',
+                'photo-1500835556837-99ac94a94552',
+                'photo-1507525428034-b723cf961d3e',
+                'photo-1476900543704-4312b78632f8'
+              ].map((id, i) => (
                 <div key={i} className="relative h-[200px] rounded-2xl overflow-hidden group cursor-pointer">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${i % 4 === 0 ? 'from-blue-400 to-blue-600' :
-                      i % 4 === 1 ? 'from-orange-400 to-orange-600' :
-                        i % 4 === 2 ? 'from-green-400 to-green-600' :
-                          'from-purple-400 to-purple-600'
-                    }`} />
+                  <Image
+                    src={`https://images.unsplash.com/${id}?q=80&w=800`}
+                    alt={`Travel memory ${i + 1}`}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    unoptimized
+                  />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                 </div>
               ))}
@@ -273,25 +319,47 @@ export default function Home() {
                 { title: 'Design', desc: 'We craft your perfect itinerary' },
                 { title: 'Refine', desc: 'Customize every detail' },
                 { title: 'Experience', desc: 'Enjoy your journey' }
-              ].map((step, i) => (
-                <div key={i} className="relative h-[300px] rounded-3xl overflow-hidden group cursor-pointer">
-                  <div className="absolute inset-0 bg-gradient-to-br from-turquoise-500 to-turquoise-900" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4 text-2xl font-bold">
-                      {i + 1}
+              ].map((step, i) => {
+                const images = [
+                  'photo-1488646953014-85cb44e25828',
+                  'photo-1488085061387-422e29b40080',
+                  'photo-1436491865332-7a61a109cc05',
+                  'photo-1501785888041-af3ef285b470'
+                ];
+                return (
+                  <div key={i} className="relative h-[300px] rounded-3xl overflow-hidden group cursor-pointer">
+                    <Image
+                      src={`https://images.unsplash.com/${images[i]}?q=80&w=800`}
+                      alt={step.title}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-turquoise-900/90 via-turquoise-700/60 to-turquoise-500/40" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4 text-2xl font-bold">
+                        {i + 1}
+                      </div>
+                      <h3 className="text-2xl font-bold mb-2">{step.title}</h3>
+                      <p className="text-sm text-turquoise-100">{step.desc}</p>
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">{step.title}</h3>
-                    <p className="text-sm text-turquoise-100">{step.desc}</p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
         <section className="relative py-32 text-white overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-turquoise-900 to-turquoise-700" />
+          <Image
+            src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070"
+            alt="Travel destination"
+            fill
+            className="object-cover"
+            unoptimized
+          />
+          <div className="absolute inset-0 bg-turquoise-900/70" />
           <div className="absolute inset-0 bg-black/30" />
 
           <div className="container relative z-10 text-center">
