@@ -10,14 +10,13 @@ export default function Home() {
       <Header />
       <main className="min-h-screen">
         {/* Hero Section */}
-        <section className="relative h-screen flex items-center justify-center text-white overflow-hidden">
+        <section className="relative h-screen flex items-center justify-center text-white overflow-hidden pt-20 md:pt-24">
           <Image
-            src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070"
-            alt="Tropical beach destination with longtail boats"
+            src="/Home.jpg"
+            alt="Turquoise Holidays - Beautiful travel destination"
             fill
             className="object-cover"
             priority
-            unoptimized
           />
           <div className="absolute inset-0 bg-black/40 z-10" />
 
@@ -25,12 +24,9 @@ export default function Home() {
             <p className="text-sm md:text-base uppercase tracking-widest mb-4 text-turquoise-200">
               Explore the world
             </p>
-            <h1 className="text-5xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-[2.7225rem] md:text-[3.63rem] lg:text-[4.5375rem] font-bold mb-6 leading-none">
               Inspiring Destinations<br />Within Your Reach
             </h1>
-            <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-gray-200">
-              Discover breathtaking places and create memories that last forever
-            </p>
             
             {/* Search Bar */}
             <SearchBar />

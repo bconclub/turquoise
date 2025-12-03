@@ -23,10 +23,10 @@ export default function Header() {
 
     return (
         <header className={`fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-b border-white/20 transition-opacity duration-300 ${isModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-            <div className="container py-4">
-                <div className="flex items-center justify-between">
+            <div className="container py-3 md:py-4 px-4">
+                <div className="flex items-center justify-between gap-2">
                     {/* Logo */}
-                    <Link href="/" className="relative h-12 w-48">
+                    <Link href="/" className="relative h-10 md:h-12 w-32 md:w-48 flex-shrink-0">
                         <Image
                             src="/TQ Dark.webp"
                             alt="Turquoise Holidays"
