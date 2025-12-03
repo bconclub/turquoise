@@ -79,7 +79,7 @@ export default function Home() {
               {/* Temple Destination */}
               <div className="relative h-[240px] rounded-3xl overflow-hidden group cursor-pointer">
                 <Image
-                  src="https://images.unsplash.com/photo-1563492065213-f6de1a1e0a6f?q=80&w=2070"
+                  src="https://images.unsplash.com/photo-1528181304800-259b08848526?q=80&w=2070"
                   alt="Ancient Buddhist Temple Thailand"
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-700"
