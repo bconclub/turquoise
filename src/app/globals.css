@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-playfair);
+  --font-display: var(--font-el-messiri);
+
+  --color-turquoise-50: #f0fdfa;
+  --color-turquoise-100: #ccfbf1;
+  --color-turquoise-200: #99f6e4;
+  --color-turquoise-300: #5eead4;
+  --color-turquoise-400: #2dd4bf;
+  --color-turquoise-500: #14b8a6;
+  --color-turquoise-600: #0d9488;
+  --color-turquoise-700: #0f766e;
+  --color-turquoise-800: #115e59;
+  --color-turquoise-900: #134e4a;
+  --color-turquoise-950: #042f2e;
+  
+  --color-gold: #D4A853;
+  --color-cream: #FDFBF7;
+  --color-charcoal: #1F2937;
+  
+  --color-primary: var(--color-turquoise-600);
+  --color-primary-foreground: #ffffff;
+  
+  --color-secondary: var(--color-gold);
+  
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+/* Custom Utilities */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  max-width: 1280px;
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-cream);
+  color: var(--color-charcoal);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), var(--font-serif);
+}
