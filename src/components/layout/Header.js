@@ -2,13 +2,27 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Check if modal is open by checking body class
+    useEffect(() => {
+        const checkModal = () => {
+            setIsModalOpen(document.body.classList.contains('modal-open'));
+        };
+        // Check initially
+        checkModal();
+        // Set up observer to watch for class changes
+        const observer = new MutationObserver(checkModal);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    });
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/10 border-b border-white/20">
+        <header className={`fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-b border-white/20 transition-opacity duration-300 ${isModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <div className="container py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
@@ -17,26 +31,26 @@ export default function Header() {
                             src="/TQ Dark.webp"
                             alt="Turquoise Holidays"
                             fill
-                            className="object-contain"
+                            className="object-contain brightness-0 invert"
                             priority
                         />
                     </Link>
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium">
+                        <Link href="/" className="text-white hover:text-white/80 transition-colors font-medium">
                             Home
                         </Link>
-                        <Link href="/destinations" className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium">
+                        <Link href="/destinations" className="text-white hover:text-white/80 transition-colors font-medium">
                             Destinations
                         </Link>
-                        <Link href="/packages" className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium">
+                        <Link href="/packages" className="text-white hover:text-white/80 transition-colors font-medium">
                             Packages
                         </Link>
-                        <Link href="/about" className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium">
+                        <Link href="/about" className="text-white hover:text-white/80 transition-colors font-medium">
                             About
                         </Link>
-                        <Link href="/contact" className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium">
+                        <Link href="/contact" className="text-white hover:text-white/80 transition-colors font-medium">
                             Contact
                         </Link>
                     </nav>
@@ -44,7 +58,7 @@ export default function Header() {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="md:hidden p-2 text-turquoise-600"
+                        className="md:hidden p-2 text-white"
                         aria-label="Toggle menu"
                     >
                         <svg
@@ -77,35 +91,35 @@ export default function Header() {
                     <nav className="md:hidden mt-4 pb-4 flex flex-col gap-4">
                         <Link
                             href="/"
-                            className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium"
+                            className="text-white hover:text-white/80 transition-colors font-medium"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Home
                         </Link>
                         <Link
                             href="/destinations"
-                            className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium"
+                            className="text-white hover:text-white/80 transition-colors font-medium"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Destinations
                         </Link>
                         <Link
                             href="/packages"
-                            className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium"
+                            className="text-white hover:text-white/80 transition-colors font-medium"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Packages
                         </Link>
                         <Link
                             href="/about"
-                            className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium"
+                            className="text-white hover:text-white/80 transition-colors font-medium"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             About
                         </Link>
                         <Link
                             href="/contact"
-                            className="text-turquoise-600 hover:text-turquoise-500 transition-colors font-medium"
+                            className="text-white hover:text-white/80 transition-colors font-medium"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Contact

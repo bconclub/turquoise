@@ -6,9 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "node scripts/seed-packages.js",
+    "check-packages": "node scripts/check-packages.js"
   },
   "dependencies": {
+    "@hugeicons/core-free-icons": "^2.0.0",
+    "@hugeicons/react": "^1.1.1",
     "@supabase/supabase-js": "^2.86.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

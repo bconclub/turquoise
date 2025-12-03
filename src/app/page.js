@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import SearchBar from '@/components/search/SearchBar';
 
 export default function Home() {
   return (
@@ -24,27 +25,17 @@ export default function Home() {
             <p className="text-sm md:text-base uppercase tracking-widest mb-4 text-turquoise-200">
               Explore the world
             </p>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+            <h1 className="text-5xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Inspiring Destinations<br />Within Your Reach
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-gray-200">
               Discover breathtaking places and create memories that last forever
             </p>
-            <Link
-              href="/destinations"
-              className="inline-block bg-turquoise-500 hover:bg-turquoise-400 text-white px-10 py-4 rounded-full text-lg font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
-            >
-              Explore Now
-            </Link>
+            
+            {/* Search Bar */}
+            <SearchBar />
           </div>
 
-          {/* Scroll Indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/80">
-            <span className="text-xs uppercase tracking-wider">Scroll</span>
-            <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
-              <div className="w-1 h-3 bg-white/70 rounded-full animate-bounce"></div>
-            </div>
-          </div>
         </section>
 
         {/* Exotic Destinations Section */}
