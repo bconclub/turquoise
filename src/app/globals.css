@@ -44,6 +44,12 @@ body {
   color: var(--color-charcoal);
 }
 
+/* Dark Mode Styles */
+.dark body {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display), var(--font-serif);
 }
@@ -64,4 +70,33 @@ body.modal-open {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Custom scrollbar with turquoise accent */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-turquoise-500);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-turquoise-600);
+  background-clip: padding-box;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-turquoise-500) rgba(255, 255, 255, 0.1);
 }

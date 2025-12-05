@@ -22,11 +22,6 @@ const elMessiri = El_Messiri({
 export const metadata = {
   title: "Turquoise Holidays | Refined Travel Luxury",
   description: "Experience the world with Turquoise Holidays. Premium travel packages, custom itineraries, and unforgettable destinations.",
-  icons: {
-    icon: '/favicon.webp',
-    shortcut: '/favicon.webp',
-    apple: '/favicon.webp',
-  },
 };
 
 export default function RootLayout({ children }) {

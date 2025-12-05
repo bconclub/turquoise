@@ -362,7 +362,7 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                     setLoadingDetails(false);
                   }}
                 >
-                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-turquoise-100 to-turquoise-200">
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-turquoise-100 to-turquoise-200 rounded-t-xl">
                     {(() => {
                       // Use a travel/desert themed fallback for Jordan, otherwise generic travel image
                       const isJordan = pkg.destination?.toLowerCase().includes('jordan');
@@ -392,7 +392,7 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                         <img
                           src={imageSrc}
                           alt={pkg.title || 'Package image'}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 rounded-t-xl"
                           onError={(e) => {
                             if (e.target.src !== fallbackImage && !e.target.dataset.fallbackSet) {
                               e.target.src = fallbackImage;
@@ -663,86 +663,106 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                 </div>
 
                 {/* Content - Mobile: Bottom, Desktop: Right */}
-                <div className="w-full md:w-1/2 overflow-y-auto p-6 md:p-8">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                    {packageDetails.title}
-                  </h2>
-                  {packageDetails.subtitle && (
-                    <p className="text-lg text-gray-600 mb-4">{packageDetails.subtitle}</p>
-                  )}
-                  
-                  {/* Description */}
-                  {packageDetails.description && (
-                    <div className="mb-6">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                        {packageDetails.description}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* What's Included (Highlights) */}
-                  {packageDetails.highlights && packageDetails.highlights.length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">What's Included</h3>
-                      <ul className="space-y-2">
-                        {packageDetails.highlights.map((highlight, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-gray-700">
-                            <Star className="w-5 h-5 text-turquoise-600 flex-shrink-0 mt-0.5" />
-                            <span>{highlight}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Activities by Name */}
-                  {packageDetails.activities && packageDetails.activities.length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Activities</h3>
-                      <div className="space-y-2">
-                        {packageDetails.activities.map((activity, idx) => {
-                          const IconComponent = getIconForActivityType(activity.type);
-                          return (
-                            <div key={idx} className="flex items-start gap-3 p-2 bg-turquoise-50 rounded-lg">
-                              <IconComponent className="w-5 h-5 text-turquoise-600 flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="font-medium text-gray-900">{activity.name}</p>
-                                {activity.description && (
-                                  <p className="text-sm text-gray-600">{activity.description}</p>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Package Info */}
-                  <div className="border-t pt-4 mt-auto">
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span>{packageDetails.destinations?.name || selectedPackage.destination}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span>{packageDetails.duration_display || selectedPackage.duration}</span>
-                      </div>
-                    </div>
-                    {packageDetails.starting_price && (
-                      <div className="text-xl font-bold text-turquoise-600 mb-4">
-                        From {packageDetails.starting_price.toLocaleString()} {packageDetails.currency || 'INR'}
-                      </div>
+                <div className="w-full md:w-1/2 relative flex flex-col overflow-hidden">
+                  {/* Scrollable Content */}
+                  <div className="overflow-y-auto p-6 md:p-8 text-left flex-1">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 text-left">
+                      {packageDetails.title}
+                    </h2>
+                    {packageDetails.subtitle && (
+                      <p className="text-lg text-gray-600 mb-4 text-left">{packageDetails.subtitle}</p>
                     )}
                     
-                    {/* View Complete Itinerary Button */}
-                    {packageDetails.slug && (
+                    {/* Description */}
+                    {packageDetails.description && (
+                      <div className="mb-6 text-left">
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-line text-left">
+                          {packageDetails.description}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* What's Included (Highlights) */}
+                    {packageDetails.highlights && packageDetails.highlights.length > 0 && (
+                      <div className="mb-6 text-left">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3 text-left">What's Included</h3>
+                        <ul className="space-y-2 text-left">
+                          {packageDetails.highlights.map((highlight, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-gray-700 text-left">
+                              <Star className="w-5 h-5 text-turquoise-600 flex-shrink-0 mt-0.5" />
+                              <span className="text-left">{highlight}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Activities by Name */}
+                    {packageDetails.activities && packageDetails.activities.length > 0 && (
+                      <div className="mb-6 text-left">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3 text-left">Activities</h3>
+                        <div className="space-y-2 text-left">
+                          {packageDetails.activities.map((activity, idx) => {
+                            const IconComponent = getIconForActivityType(activity.type);
+                            return (
+                              <div key={idx} className="flex items-start gap-3 p-2 bg-turquoise-50 rounded-lg text-left">
+                                <IconComponent className="w-5 h-5 text-turquoise-600 flex-shrink-0 mt-0.5" />
+                                <div className="text-left">
+                                  <p className="font-medium text-gray-900 text-left">{activity.name}</p>
+                                  {activity.description && (
+                                    <p className="text-sm text-gray-600 text-left">{activity.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Package Info */}
+                    <div className="border-t pt-4 mt-auto text-left">
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-4 text-left">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-left">{packageDetails.destinations?.name || selectedPackage.destination}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-left">{packageDetails.duration_display || selectedPackage.duration}</span>
+                        </div>
+                      </div>
+                      {packageDetails.starting_price && (
+                        <div className="text-xl font-bold text-turquoise-600 mb-4 text-left">
+                          From {packageDetails.starting_price.toLocaleString()} {packageDetails.currency || 'INR'}
+                        </div>
+                      )}
+                      
+                      {/* View Complete Itinerary Button - Mobile */}
+                      {packageDetails.slug && (
+                        <Link
+                          href={`/packages/${packageDetails.slug}`}
+                          className="block w-full bg-turquoise-600 hover:bg-turquoise-700 text-white text-center py-3 px-6 rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl md:hidden"
+                          onClick={() => {
+                            setSelectedPackage(null);
+                            setPackageDetails(null);
+                            setSelectedImageIndex(0);
+                          }}
+                        >
+                          View Complete Itinerary
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Sticky Button at Bottom Right - Desktop */}
+                  {packageDetails.slug && (
+                    <div className="sticky bottom-0 p-6 md:p-8 pt-0 bg-white/10 backdrop-blur-xl border-t border-white/20 md:flex hidden justify-center">
                       <Link
                         href={`/packages/${packageDetails.slug}`}
-                        className="block w-full bg-turquoise-600 hover:bg-turquoise-700 text-white text-center py-3 px-6 rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
+                        className="bg-turquoise-600/90 hover:bg-turquoise-700/90 backdrop-blur-sm text-white py-3 px-8 rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl border border-white/20"
                         onClick={() => {
                           setSelectedPackage(null);
                           setPackageDetails(null);
@@ -751,8 +771,8 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                       >
                         View Complete Itinerary
                       </Link>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

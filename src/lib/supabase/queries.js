@@ -1,3 +1,5 @@
+'use client';
+
 import { supabase } from './client';
 
 /**
@@ -251,10 +253,10 @@ export async function getTopDestinations(limit = 3) {
   try {
     const { data, error } = await supabase
       .from('destinations')
-      .select('id, name, slug, package_count, is_featured')
+      .select('id, name, slug, is_featured')
       .eq('is_active', true)
       .order('is_featured', { ascending: false })
-      .order('package_count', { ascending: false })
+      .order('name', { ascending: true })
       .limit(limit);
 
     if (error) {
@@ -450,6 +452,541 @@ export async function getPackageDetails(packageId) {
   } catch (error) {
     console.error('Error in getPackageDetails:', error);
     return null;
+  }
+}
+
+/**
+ * Get package by slug (for public detail page)
+ */
+export async function getPackageBySlug(slug) {
+  try {
+    const { data: packageData, error: packageError } = await supabase
+      .from('packages')
+      .select(`
+        *,
+        destinations (
+          id,
+          name,
+          slug,
+          country,
+          region
+        )
+      `)
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single();
+
+    if (packageError || !packageData) {
+      console.error('Error fetching package by slug:', packageError);
+      return null;
+    }
+
+    // Fetch itinerary days
+    const { data: itineraryData, error: itineraryError } = await supabase
+      .from('itinerary_days')
+      .select('*')
+      .eq('package_id', packageData.id)
+      .order('day_number', { ascending: true });
+
+    if (itineraryError) {
+      console.error('Error fetching itinerary:', itineraryError);
+    }
+
+    return {
+      ...packageData,
+      itinerary: itineraryData || []
+    };
+  } catch (error) {
+    console.error('Error in getPackageBySlug:', error);
+    return null;
+  }
+}
+
+/**
+ * Get destination by slug
+ */
+export async function getDestinationBySlug(slug) {
+  try {
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      console.error('Error fetching destination by slug:', error);
+      return null;
+    }
+
+    // Get packages for this destination
+    const { data: packagesData, error: packagesError } = await supabase
+      .from('packages')
+      .select(`
+        id,
+        slug,
+        title,
+        subtitle,
+        nights,
+        days,
+        duration_display,
+        starting_price,
+        currency,
+        hero_image,
+        thumbnail,
+        highlights
+      `)
+      .eq('destination_id', data.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(12);
+
+    if (packagesError) {
+      console.error('Error fetching destination packages:', packagesError);
+    }
+
+    return {
+      ...data,
+      packages: packagesData || []
+    };
+  } catch (error) {
+    console.error('Error in getDestinationBySlug:', error);
+    return null;
+  }
+}
+
+/**
+ * Admin: Get package statistics
+ */
+export async function getPackageStats() {
+  try {
+    const [packagesResult, destinationsResult, inquiriesResult] = await Promise.all([
+      supabase.from('packages').select('id, view_count, is_active', { count: 'exact' }),
+      supabase.from('destinations').select('id', { count: 'exact' }),
+      supabase.from('inquiries').select('id, status', { count: 'exact' }),
+    ]);
+
+    const packages = packagesResult.data || [];
+    const totalViews = packages.reduce((sum, pkg) => sum + (pkg.view_count || 0), 0);
+    const activePackages = packages.filter(p => p.is_active).length;
+
+    const inquiries = inquiriesResult.data || [];
+    const newInquiries = inquiries.filter(i => i.status === 'new').length;
+    const contactedInquiries = inquiries.filter(i => i.status === 'contacted').length;
+    const convertedInquiries = inquiries.filter(i => i.status === 'converted').length;
+
+    return {
+      totalPackages: packagesResult.count || 0,
+      activePackages,
+      totalDestinations: destinationsResult.count || 0,
+      totalInquiries: inquiriesResult.count || 0,
+      newInquiries,
+      contactedInquiries,
+      convertedInquiries,
+      totalViews,
+    };
+  } catch (error) {
+    console.error('Error getting package stats:', error);
+    return null;
+  }
+}
+
+/**
+ * Admin: Get most viewed packages
+ */
+export async function getMostViewedPackages(limit = 5) {
+  try {
+    const { data, error } = await supabase
+      .from('packages')
+      .select(`
+        id,
+        title,
+        slug,
+        view_count,
+        destinations (name)
+      `)
+      .order('view_count', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting most viewed packages:', error);
+    return [];
+  }
+}
+
+/**
+ * Admin: Get package analytics
+ */
+export async function getPackageAnalytics() {
+  try {
+    const { data: packages, error } = await supabase
+      .from('packages')
+      .select(`
+        id,
+        title,
+        slug,
+        view_count,
+        is_active,
+        is_featured,
+        nights,
+        days,
+        created_at,
+        destinations (name, id)
+      `);
+
+    if (error) throw error;
+
+    const allPackages = packages || [];
+    
+    // Packages by destination
+    const packagesByDestination = {};
+    allPackages.forEach(pkg => {
+      const destName = pkg.destinations?.name || 'Unknown';
+      packagesByDestination[destName] = (packagesByDestination[destName] || 0) + 1;
+    });
+
+    // Packages by duration (nights)
+    const packagesByDuration = {
+      '1-3 nights': 0,
+      '4-6 nights': 0,
+      '7-10 nights': 0,
+      '11+ nights': 0,
+    };
+    allPackages.forEach(pkg => {
+      const nights = pkg.nights || 0;
+      if (nights <= 3) packagesByDuration['1-3 nights']++;
+      else if (nights <= 6) packagesByDuration['4-6 nights']++;
+      else if (nights <= 10) packagesByDuration['7-10 nights']++;
+      else packagesByDuration['11+ nights']++;
+    });
+
+    // Featured packages
+    const featuredPackages = allPackages.filter(p => p.is_featured);
+
+    // Recently added (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentlyAdded = allPackages.filter(p => {
+      const created = new Date(p.created_at);
+      return created >= sevenDaysAgo;
+    });
+
+    // Average views
+    const totalViews = allPackages.reduce((sum, p) => sum + (p.view_count || 0), 0);
+    const avgViews = allPackages.length > 0 ? Math.round(totalViews / allPackages.length) : 0;
+
+    // Top destinations by package count
+    const topDestinations = Object.entries(packagesByDestination)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      packagesByDestination,
+      packagesByDuration,
+      featuredCount: featuredPackages.length,
+      recentlyAddedCount: recentlyAdded.length,
+      avgViews,
+      topDestinations,
+    };
+  } catch (error) {
+    console.error('Error getting package analytics:', error);
+    return {
+      packagesByDestination: {},
+      packagesByDuration: { '1-3 nights': 0, '4-6 nights': 0, '7-10 nights': 0, '11+ nights': 0 },
+      featuredCount: 0,
+      recentlyAddedCount: 0,
+      avgViews: 0,
+      topDestinations: [],
+    };
+  }
+}
+
+/**
+ * Admin: Get recently added packages
+ */
+export async function getRecentlyAddedPackages(limit = 5) {
+  try {
+    const { data, error } = await supabase
+      .from('packages')
+      .select(`
+        id,
+        title,
+        slug,
+        created_at,
+        destinations (name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting recently added packages:', error);
+    return [];
+  }
+}
+
+/**
+ * Admin: Get featured packages
+ */
+export async function getFeaturedPackagesAdmin(limit = 5) {
+  try {
+    const { data, error } = await supabase
+      .from('packages')
+      .select(`
+        id,
+        title,
+        slug,
+        view_count,
+        destinations (name)
+      `)
+      .eq('is_featured', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting featured packages:', error);
+    return [];
+  }
+}
+
+/**
+ * Admin: Get recent inquiries
+ */
+export async function getRecentInquiries(limit = 10) {
+  try {
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select(`
+        id,
+        name,
+        email,
+        phone,
+        status,
+        package_id,
+        packages (title),
+        created_at
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting recent inquiries:', error);
+    return [];
+  }
+}
+
+/**
+ * Admin: Get packages with issues (missing data)
+ */
+export async function getPackagesWithIssues() {
+  try {
+    const { data, error } = await supabase
+      .from('packages')
+      .select(`
+        id,
+        title,
+        slug,
+        hero_image,
+        destinations (name)
+      `);
+
+    if (error) throw error;
+
+    const missingImages = (data || []).filter(pkg => !pkg.hero_image || pkg.hero_image.trim() === '');
+    
+    // Check for packages without itinerary
+    const packagesWithoutItinerary = [];
+    for (const pkg of data || []) {
+      const { data: itinerary } = await supabase
+        .from('itinerary_days')
+        .select('id')
+        .eq('package_id', pkg.id)
+        .limit(1);
+      
+      if (!itinerary || itinerary.length === 0) {
+        packagesWithoutItinerary.push(pkg);
+      }
+    }
+
+    return {
+      missingImages,
+      missingItinerary: packagesWithoutItinerary,
+    };
+  } catch (error) {
+    console.error('Error getting packages with issues:', error);
+    return { missingImages: [], missingItinerary: [] };
+  }
+}
+
+/**
+ * Admin: Update package
+ */
+export async function updatePackage(id, data) {
+  try {
+    const { data: updated, error } = await supabase
+      .from('packages')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data: updated, error: null };
+  } catch (error) {
+    console.error('Error updating package:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Admin: Delete package
+ */
+export async function deletePackage(id) {
+  try {
+    const { error } = await supabase
+      .from('packages')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Error deleting package:', error);
+    return { error };
+  }
+}
+
+/**
+ * Admin: Update itinerary day
+ */
+export async function updateItineraryDay(id, data) {
+  try {
+    const { data: updated, error } = await supabase
+      .from('itinerary_days')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data: updated, error: null };
+  } catch (error) {
+    console.error('Error updating itinerary day:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Admin: Create itinerary day
+ */
+export async function createItineraryDay(packageId, data) {
+  try {
+    const { data: created, error } = await supabase
+      .from('itinerary_days')
+      .insert({
+        package_id: packageId,
+        ...data,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data: created, error: null };
+  } catch (error) {
+    console.error('Error creating itinerary day:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Admin: Get all packages (for admin list)
+ */
+export async function getAllPackagesForAdmin() {
+  try {
+    const { data, error } = await supabase
+      .from('packages')
+      .select(`
+        id,
+        title,
+        slug,
+        is_active,
+        view_count,
+        created_at,
+        destinations (name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting all packages for admin:', error);
+    return [];
+  }
+}
+
+/**
+ * Admin: Get single package with full details for editing
+ */
+export async function getPackageForEdit(id) {
+  try {
+    console.log('🔍 [getPackageForEdit] Fetching package with id:', id);
+    
+    const { data, error } = await supabase
+      .from('packages')
+      .select(`
+        *,
+        destinations (id, name)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('❌ [getPackageForEdit] Supabase error:', error);
+      throw error;
+    }
+
+    if (!data) {
+      console.warn('⚠️ [getPackageForEdit] No data returned for id:', id);
+      return null;
+    }
+
+    console.log('✅ [getPackageForEdit] Package loaded:', {
+      id: data.id,
+      title: data.title,
+      hasDestination: !!data.destinations,
+    });
+
+    return data;
+  } catch (error) {
+    console.error('❌ [getPackageForEdit] Error getting package for edit:', error);
+    return null;
+  }
+}
+
+/**
+ * Admin: Get itinerary days for a package
+ */
+export async function getItineraryDays(packageId) {
+  try {
+    const { data, error } = await supabase
+      .from('itinerary_days')
+      .select('*')
+      .eq('package_id', packageId)
+      .order('day_number', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting itinerary days:', error);
+    return [];
   }
 }
 
