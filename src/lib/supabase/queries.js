@@ -8,7 +8,7 @@ import { supabase } from './client';
 export async function getPackages(filters = {}) {
   try {
     console.log('🔍 [getPackages] Starting fetch with filters:', filters);
-    
+
     // Select columns from database - using correct column names: nights, days, duration_display
     // Note: price_currency may not exist in actual database
     let query = supabase
@@ -69,7 +69,7 @@ export async function getPackages(filters = {}) {
 
     console.log('🚀 [getPackages] Executing Supabase query...');
     const { data, error } = await query;
-    
+
     console.log('📦 [getPackages] Raw Supabase response:', {
       hasData: !!data,
       dataLength: data?.length || 0,
@@ -82,7 +82,7 @@ export async function getPackages(filters = {}) {
       console.error('❌ [getPackages] Full error:', JSON.stringify(error, null, 2));
       console.error('❌ [getPackages] Error code:', error.code);
       console.error('❌ [getPackages] Error details:', error.details);
-      
+
       // Store error in localStorage for status page
       if (typeof window !== 'undefined') {
         try {
@@ -100,7 +100,7 @@ export async function getPackages(filters = {}) {
           // Ignore localStorage errors
         }
       }
-      
+
       return [];
     }
 
@@ -120,17 +120,17 @@ export async function getPackages(filters = {}) {
     // Transform data to match component expectations
     const transformed = (data || []).map((pkg, index) => {
       // Handle destination data - it comes as an object or array from Supabase join
-      const destination = Array.isArray(pkg.destinations) 
-        ? pkg.destinations[0] 
+      const destination = Array.isArray(pkg.destinations)
+        ? pkg.destinations[0]
         : pkg.destinations;
-      
+
       // Use correct column names: nights and days
       const nights = pkg.nights ?? 0;
       const days = pkg.days ?? (nights + 1);
-      
+
       // Use duration_display if available, otherwise format from nights/days
       const duration = pkg.duration_display || formatDuration(nights, days);
-      
+
       const transformedPkg = {
         id: pkg.id,
         slug: pkg.slug,
@@ -143,15 +143,15 @@ export async function getPackages(filters = {}) {
         durationDays: days,
         price: pkg.starting_price,
         currency: pkg.price_currency || pkg.currency || 'INR', // Fallback if column doesn't exist
-        image: (pkg.hero_image && pkg.hero_image.trim() !== '') 
-          ? pkg.hero_image 
-          : ((pkg.thumbnail && pkg.thumbnail.trim() !== '') 
-            ? pkg.thumbnail 
+        image: (pkg.hero_image && pkg.hero_image.trim() !== '')
+          ? pkg.hero_image
+          : ((pkg.thumbnail && pkg.thumbnail.trim() !== '')
+            ? pkg.thumbnail
             : 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&h=600&fit=crop'),
         highlights: pkg.highlights || [],
         activityTypes: activityTypesMap[pkg.id] || [] // Unique activity types from itinerary
       };
-      
+
       if (index < 3) {
         console.log(`📋 [getPackages] Transformed package ${index + 1}:`, {
           title: transformedPkg.title,
@@ -162,15 +162,15 @@ export async function getPackages(filters = {}) {
           hasImage: !!transformedPkg.image
         });
       }
-      
+
       return transformedPkg;
     });
-    
+
     console.log(`✨ [getPackages] Successfully transformed ${transformed.length} packages`);
     return transformed;
   } catch (error) {
     console.error('Error in getPackages:', error);
-    
+
     // Store error in localStorage for status page
     if (typeof window !== 'undefined') {
       try {
@@ -186,7 +186,7 @@ export async function getPackages(filters = {}) {
         // Ignore localStorage errors
       }
     }
-    
+
     return [];
   }
 }
@@ -219,7 +219,7 @@ export async function getDestinations() {
 
     if (error) {
       console.error('Error fetching destinations:', error);
-      
+
       // Store error in localStorage for status page
       if (typeof window !== 'undefined') {
         try {
@@ -234,7 +234,7 @@ export async function getDestinations() {
           // Ignore localStorage errors
         }
       }
-      
+
       return [];
     }
 
@@ -294,7 +294,7 @@ export async function getPackageActivityTypes(packageId) {
 
     // Extract unique activity types from all activities
     const activityTypes = new Set();
-    
+
     data.forEach(day => {
       if (day.activities && Array.isArray(day.activities)) {
         day.activities.forEach(activity => {
@@ -339,7 +339,7 @@ export async function getPackagesActivityTypes(packageIds) {
 
     // Group by package_id and extract unique activity types
     const activityTypesMap = {};
-    
+
     data.forEach(day => {
       const packageId = day.package_id;
       if (!activityTypesMap[packageId]) {
@@ -639,7 +639,7 @@ export async function getPackageAnalytics() {
     if (error) throw error;
 
     const allPackages = packages || [];
-    
+
     // Packages by destination
     const packagesByDestination = {};
     allPackages.forEach(pkg => {
@@ -801,7 +801,7 @@ export async function getPackagesWithIssues() {
     if (error) throw error;
 
     const missingImages = (data || []).filter(pkg => !pkg.hero_image || pkg.hero_image.trim() === '');
-    
+
     // Check for packages without itinerary
     const packagesWithoutItinerary = [];
     for (const pkg of data || []) {
@@ -810,7 +810,7 @@ export async function getPackagesWithIssues() {
         .select('id')
         .eq('package_id', pkg.id)
         .limit(1);
-      
+
       if (!itinerary || itinerary.length === 0) {
         packagesWithoutItinerary.push(pkg);
       }
@@ -938,7 +938,7 @@ export async function getAllPackagesForAdmin() {
 export async function getPackageForEdit(id) {
   try {
     console.log('🔍 [getPackageForEdit] Fetching package with id:', id);
-    
+
     const { data, error } = await supabase
       .from('packages')
       .select(`
@@ -990,3 +990,30 @@ export async function getItineraryDays(packageId) {
   }
 }
 
+
+/**
+ * Create a new destination
+ */
+export async function createDestination(name) {
+  try {
+    // Generate slug from name
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+    const { data, error } = await supabase
+      .from('destinations')
+      .insert([
+        { name, slug, is_active: true }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error creating destination:', error);
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.error('Error creating destination:', error);
+    return null;
+  }
+}
