@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import {
   Upload, FileText, CheckCircle, XCircle, Loader, Image as ImageIcon,
   Plus, MapPin, Calendar, Clock, ChevronDown, ChevronUp, AlertCircle,
-  Coffee, Moon, Sun, Camera, Info
+  Coffee, Moon, Sun, Camera, Info, Landmark, Car, ShoppingBag, 
+  Mountain, Waves, Plane, Star, Route, Binoculars
 } from 'lucide-react';
 import { getDestinations, createDestination } from '@/lib/supabase/queries';
 import { supabase } from '@/lib/supabase/client';
@@ -35,9 +36,107 @@ export default function ImportPage() {
 
   // UI State
   const [showItinerary, setShowItinerary] = useState(false);
+  const [expandedDays, setExpandedDays] = useState(new Set([1])); // Day 1 expanded by default
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Helper function to get icon for activity type
+  const getActivityIcon = (type) => {
+    const iconMap = {
+      'cultural': Landmark,
+      'transfer': Car,
+      'shopping': ShoppingBag,
+      'adventure': Mountain,
+      'beach': Waves,
+      'sightseeing': Camera,
+      'leisure': Coffee,
+      'show': Star,
+      'trek': Route,
+      'wildlife': Binoculars,
+    };
+    return iconMap[type] || Camera;
+  };
+
+  const toggleDay = (dayNumber) => {
+    setExpandedDays(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dayNumber)) {
+        newSet.delete(dayNumber);
+      } else {
+        newSet.add(dayNumber);
+      }
+      return newSet;
+    });
+  };
+
+  // Generate title based on package data
+  const generateTitle = (data, destination) => {
+    if (!data) return '';
+    
+    const parts = [];
+    
+    // Add destination name if available
+    if (destination?.name) {
+      parts.push(destination.name);
+    }
+    
+    // Add cities if available (first 2-3 cities)
+    if (data.cities_covered && data.cities_covered.length > 0) {
+      const cities = data.cities_covered.slice(0, 3);
+      if (cities.length === 1) {
+        parts.push(cities[0]);
+      } else if (cities.length === 2) {
+        parts.push(`${cities[0]} & ${cities[1]}`);
+      } else {
+        parts.push(`${cities[0]}, ${cities[1]} & ${cities[2]}`);
+      }
+    }
+    
+    // Add theme/travel style if available
+    if (data.travel_styles && data.travel_styles.length > 0) {
+      const style = data.travel_styles[0];
+      const styleMap = {
+        'cultural': 'Heritage',
+        'adventure': 'Adventure',
+        'luxury': 'Luxury',
+        'historical': 'Historical',
+        'beach': 'Beach',
+        'wildlife': 'Wildlife',
+        'pilgrimage': 'Pilgrimage',
+        'honeymoon': 'Romantic'
+      };
+      const styleName = styleMap[style] || style.charAt(0).toUpperCase() + style.slice(1);
+      parts.push(styleName);
+    }
+    
+    // Add "Tour" or "Experience" suffix
+    if (parts.length > 0) {
+      return `${parts.join(' ')} Tour`;
+    }
+    
+    // Fallback: use first itinerary day title if available
+    if (data.itinerary && data.itinerary.length > 0 && data.itinerary[0].title) {
+      const dayTitle = data.itinerary[0].title.replace(/^Day\s+\d+:\s*/i, '').trim();
+      if (dayTitle) {
+        return `${dayTitle} Package`;
+      }
+    }
+    
+    return 'Travel Package';
+  };
+
+  // Auto-generate title when destination is selected and title is empty
+  useEffect(() => {
+    if (previewData && !previewData.title && selectedDestination && destinations.length > 0) {
+      const destination = destinations.find(d => d.id === selectedDestination);
+      const generatedTitle = generateTitle(previewData, destination);
+      if (generatedTitle && generatedTitle !== 'Travel Package') {
+        setPreviewData(prev => ({ ...prev, title: generatedTitle }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDestination]);
 
   useEffect(() => {
     loadDestinations();
@@ -114,11 +213,21 @@ export default function ImportPage() {
       }
 
       const data = await response.json();
+      
+      // Auto-generate title if missing
+      if (!data.title) {
+        // We'll generate it after destination is selected, but set a placeholder
+        data.title = '';
+      }
+      
       setPreviewData(data);
 
       // Reset images if new file
       setHeroImage('');
       setThumbnail('');
+      
+      // Reset expanded days to Day 1
+      setExpandedDays(new Set([1]));
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -160,6 +269,13 @@ export default function ImportPage() {
     if (!thumbnail) errors.push('Thumbnail is required');
     if (!previewData?.nights && !previewData?.days) errors.push('Duration is missing');
     if (!previewData?.itinerary || previewData.itinerary.length === 0) errors.push('Itinerary is empty');
+    // Warnings (not blocking)
+    if (!previewData?.cities_covered || previewData.cities_covered.length === 0) {
+      console.warn('No cities covered detected - will be auto-calculated from itinerary');
+    }
+    if (!previewData?.stay_breakdown || previewData.stay_breakdown.length === 0) {
+      console.warn('No stay breakdown detected - will be auto-calculated from itinerary');
+    }
     return errors;
   };
 
@@ -174,58 +290,135 @@ export default function ImportPage() {
     setSaveError(null);
 
     try {
+      console.log('💾 [Import] Starting save process...', {
+          title: previewData.title,
+        destination: selectedDestination,
+          nights: previewData.nights,
+          days: previewData.days,
+        citiesCount: previewData.cities_covered?.length || 0,
+        stayBreakdownCount: previewData.stay_breakdown?.length || 0
+      });
+
+      // Prepare package data - ALL fields from Data_Structure.md
+      const destination = destinations.find(d => d.id === selectedDestination);
+      const packageData = {
+        // Basic Info
+        title: previewData.title || generateTitle(previewData, destination) || 'Travel Package',
+        subtitle: previewData.subtitle || null,
+        description: previewData.description || null,
+        slug: previewData.slug,
+        
+        // Destination
+        destination_id: selectedDestination,
+        cities_covered: (previewData.cities_covered && previewData.cities_covered.length > 0) ? previewData.cities_covered : [],
+        
+        // Duration
+        nights: previewData.nights || 0,
+        days: previewData.days || 0,
+        duration_display: previewData.duration_display || `${previewData.days || 0} Days / ${previewData.nights || 0} Nights`,
+        
+        // Stay
+        stay_breakdown: (previewData.stay_breakdown && previewData.stay_breakdown.length > 0) ? previewData.stay_breakdown : [],
+        
+        // Categories
+        travel_styles: previewData.travel_styles || [],
+        themes: previewData.themes || [],
+        difficulty: previewData.difficulty || 'easy',
+        pace: previewData.pace || 'moderate',
+        
+        // Content
+        highlights: previewData.highlights || [],
+          includes: previewData.includes || [],
+          excludes: previewData.excludes || [],
+        important_notes: previewData.important_notes || [],
+        
+        // Pricing
+        starting_price: previewData.starting_price || null,
+        currency: previewData.currency || 'INR',
+        price_note: previewData.price_note || null,
+        
+        // Transport
+        arrival_point: previewData.arrival_point || null,
+        departure_point: previewData.departure_point || null,
+        internal_transport: (previewData.internal_transport && previewData.internal_transport.length > 0) ? previewData.internal_transport : [],
+        
+        // Timing
+        best_months: previewData.best_months || [],
+        season_note: previewData.season_note || null,
+        
+        // Media
+        hero_image: heroImage,
+        thumbnail: thumbnail,
+        gallery: previewData.gallery || [],
+        
+        // Status
+        is_active: true,
+        is_featured: false,
+        is_domestic: destination?.is_domestic || false
+      };
+
+      console.log('💾 [Import] Package data prepared:', packageData);
+
       // 1. Insert Package
       const { data: pkgData, error: pkgError } = await supabase
         .from('packages')
-        .insert({
-          title: previewData.title,
-          subtitle: previewData.subtitle || '',
-          description: previewData.description || '',
-          destination_id: selectedDestination,
-          slug: previewData.slug,
-          nights: previewData.nights,
-          days: previewData.days,
-          duration_display: previewData.duration_display,
-          hero_image: heroImage,
-          thumbnail: thumbnail,
-          includes: previewData.includes || [],
-          excludes: previewData.excludes || [],
-          highlights: previewData.highlights || [],
-          is_active: true, // Default to active? Or draft?
-          is_featured: false
-        })
+        .insert(packageData)
         .select()
         .single();
 
-      if (pkgError) throw pkgError;
+      if (pkgError) {
+        console.error('❌ [Import] Package insert error:', {
+          message: pkgError.message,
+          code: pkgError.code,
+          details: pkgError.details,
+          hint: pkgError.hint
+        });
+        throw new Error(`Failed to save package: ${pkgError.message || pkgError.code || 'Unknown error'}`);
+      }
+
+      console.log('✅ [Import] Package saved:', pkgData.id);
 
       // 2. Insert Itinerary Days
       if (previewData.itinerary && previewData.itinerary.length > 0) {
+        console.log(`💾 [Import] Inserting ${previewData.itinerary.length} itinerary days...`);
+        
         const itineraryDays = previewData.itinerary.map(day => ({
           package_id: pkgData.id,
-          day_number: day.day_number,
-          title: day.title,
-          description: day.description,
-          activities: day.activities, // JSONB
-          meals: day.meals, // JSONB
-          overnight: day.overnight,
-          route_from: day.route_from,
-          route_to: day.route_to
+          day_number: day.day_number || day.day,
+          title: day.title || `Day ${day.day_number || day.day}`,
+          description: day.description || '',
+          activities: Array.isArray(day.activities) ? day.activities : [], // JSONB
+          meals: Array.isArray(day.meals) ? day.meals : [], // JSONB
+          overnight: day.overnight || null,
+          route_from: day.route_from || null,
+          route_to: day.route_to || null,
+          route_mode: day.route_mode || null,
+          optionals: Array.isArray(day.optionals) ? day.optionals : [] // JSONB
         }));
 
-        const { error: daysError } = await supabase
+        const { data: daysData, error: daysError } = await supabase
           .from('itinerary_days')
-          .insert(itineraryDays);
+          .insert(itineraryDays)
+          .select();
 
-        if (daysError) throw daysError;
+        if (daysError) {
+          console.error('❌ [Import] Itinerary days insert error:', daysError);
+          throw new Error(`Failed to save itinerary: ${daysError.message}`);
+        }
+
+        console.log(`✅ [Import] ${daysData?.length || 0} itinerary days saved`);
+      } else {
+        console.warn('⚠️ [Import] No itinerary days to save');
       }
 
       setSaveSuccess(true);
+      console.log('✅ [Import] Package import completed successfully!');
+      
       // Optional: Redirect or clear
       // router.push(`/admin/packages/${pkgData.id}`);
     } catch (error) {
-      console.error('Save error:', error);
-      setSaveError(error.message || 'Failed to save package');
+      console.error('❌ [Import] Save error:', error);
+      setSaveError(error.message || 'Failed to save package. Please check the console for details.');
     } finally {
       setSaving(false);
     }
@@ -238,10 +431,24 @@ export default function ImportPage() {
     destination: !!selectedDestination,
     hero: !!heroImage,
     thumbnail: !!thumbnail,
-    itinerary: !!(previewData?.itinerary?.length > 0)
+    itinerary: !!(previewData?.itinerary?.length > 0),
+    citiesCovered: !!(previewData?.cities_covered?.length > 0),
+    highlights: !!(previewData?.highlights?.length > 0),
+    includes: !!(previewData?.includes?.length > 0),
+    excludes: !!(previewData?.excludes?.length > 0),
+    stayBreakdown: !!(previewData?.stay_breakdown?.length > 0)
   };
 
-  const allValid = Object.values(validation).every(Boolean);
+  // Only check required fields for allValid (stay_breakdown is auto-calculated, so it's optional)
+  const requiredValidation = {
+    title: validation.title,
+    duration: validation.duration,
+    destination: validation.destination,
+    hero: validation.hero,
+    thumbnail: validation.thumbnail,
+    itinerary: validation.itinerary
+  };
+  const allValid = Object.values(requiredValidation).every(Boolean);
 
   return (
     <div className="space-y-8 pb-20">
@@ -370,6 +577,60 @@ export default function ImportPage() {
           {/* Left Column: Form & Validation */}
           <div className="lg:col-span-1 space-y-6">
 
+            {/* Title & Description Editor */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 space-y-4">
+              <h3 className="font-semibold text-gray-900 mb-4">Package Details</h3>
+              
+              {/* Title Field */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Title *</label>
+                  {!previewData.title && (
+                    <button
+                      onClick={() => {
+                        const generatedTitle = generateTitle(previewData, destinations.find(d => d.id === selectedDestination));
+                        setPreviewData(prev => ({ ...prev, title: generatedTitle }));
+                      }}
+                      className="text-xs text-turquoise-600 hover:text-turquoise-700 font-medium"
+                    >
+                      Generate Title
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={previewData.title || ''}
+                  onChange={(e) => setPreviewData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter package title or click 'Generate Title'"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900"
+                />
+              </div>
+
+              {/* Subtitle Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                <input
+                  type="text"
+                  value={previewData.subtitle || ''}
+                  onChange={(e) => setPreviewData(prev => ({ ...prev, subtitle: e.target.value }))}
+                  placeholder="Short tagline or subtitle"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900"
+                />
+              </div>
+
+              {/* Description Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={previewData.description || ''}
+                  onChange={(e) => setPreviewData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Package description"
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900 resize-none"
+                />
+              </div>
+            </div>
+
             {/* Validation Checklist */}
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
               <h3 className="font-semibold text-gray-900 mb-4">Validation Checklist</h3>
@@ -379,6 +640,27 @@ export default function ImportPage() {
                 <ValidationItem label="Destination" valid={validation.destination} />
                 <ValidationItem label="Hero Image" valid={validation.hero} />
                 <ValidationItem label="Thumbnail" valid={validation.thumbnail} />
+                <ValidationItem 
+                  label={`Cities Covered (${previewData?.cities_covered?.length || 0} cities)`} 
+                  valid={validation.citiesCovered} 
+                />
+                <ValidationItem 
+                  label={`Highlights (${previewData?.highlights?.length || 0} items)`} 
+                  valid={validation.highlights} 
+                />
+                <ValidationItem 
+                  label={`Includes (${previewData?.includes?.length || 0} items)`} 
+                  valid={validation.includes} 
+                />
+                <ValidationItem 
+                  label={`Excludes (${previewData?.excludes?.length || 0} items)`} 
+                  valid={validation.excludes} 
+                />
+                <ValidationItem 
+                  label={`Stay Breakdown (${previewData?.stay_breakdown?.length || 0} locations)`} 
+                  valid={validation.stayBreakdown} 
+                  warning={true}
+                />
                 <ValidationItem label="Itinerary" valid={validation.itinerary} />
               </div>
             </div>
@@ -535,22 +817,77 @@ export default function ImportPage() {
                 {/* Content Area */}
                 <div className="p-5">
                   <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-turquoise-600 transition-colors">
-                    {previewData.title}
+                    {previewData.title || generateTitle(previewData, destinations.find(d => d.id === selectedDestination)) || 'Untitled Package'}
                   </h3>
 
-                  {/* Highlights */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {(previewData.highlights || []).slice(0, 3).map((highlight, idx) => (
-                      <span key={idx} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
-                        {highlight}
+                  {/* Subtitle (Short Description) */}
+                  {previewData.subtitle && (
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                      {previewData.subtitle}
+                    </p>
+                  )}
+
+                  {/* Description on Card */}
+                  {previewData.description && (
+                    <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                      {previewData.description}
+                    </p>
+                  )}
+
+                  {/* Destination with MapPin */}
+                  <div className="flex items-center gap-2 text-base text-gray-600 mb-3">
+                    <MapPin className="w-5 h-5" />
+                    <span>{destinations.find(d => d.id === selectedDestination)?.name || 'Select Destination'}</span>
+                  </div>
+
+                  {/* Destinations Covered - Only show if valid cities exist */}
+                  {previewData.cities_covered && previewData.cities_covered.length > 0 && previewData.cities_covered.length <= 10 && (
+                    <div className="mb-3">
+                      <div className="flex flex-wrap items-center gap-1 text-xs text-gray-500">
+                        {previewData.cities_covered.slice(0, 5).map((city, idx) => (
+                          <span key={idx} className="flex items-center">
+                            {idx > 0 && <span className="mx-1 text-gray-400">→</span>}
+                            <span>{city}</span>
                       </span>
                     ))}
+                        {previewData.cities_covered.length > 5 && (
+                          <span className="text-gray-400 ml-1">+{previewData.cities_covered.length - 5} more</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Highlights List - Compact format */}
+                  {previewData.highlights && previewData.highlights.length > 0 && (
+                    <div className="mb-3">
+                      <ul className="space-y-1">
+                        {(previewData.highlights || []).slice(0, 3).map((highlight, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5 text-xs text-gray-600">
+                            <Star className="w-3 h-3 text-turquoise-600 flex-shrink-0 mt-0.5" />
+                            <span className="line-clamp-1">{highlight}</span>
+                          </li>
+                        ))}
                     {(previewData.highlights?.length > 3) && (
-                      <span className="text-xs px-2 py-1 bg-gray-50 text-gray-400 rounded-md">
-                        +{previewData.highlights.length - 3} more
-                      </span>
+                          <li className="text-xs text-gray-400 pl-4">
+                            +{previewData.highlights.length - 3} more highlights
+                          </li>
                     )}
+                      </ul>
                   </div>
+                  )}
+
+                  {/* Stay Breakdown - Compact format */}
+                  {previewData.stay_breakdown && previewData.stay_breakdown.length > 0 && previewData.stay_breakdown.length <= 5 && (
+                    <div className="mb-3 text-xs text-gray-500">
+                      {previewData.stay_breakdown.map((stay, idx) => (
+                        <span key={idx}>
+                          <span className="font-medium text-gray-700">{stay.location}</span>
+                          <span>: {stay.nights}N</span>
+                          {idx < previewData.stay_breakdown.length - 1 && <span className="mx-1">,</span>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -581,42 +918,92 @@ export default function ImportPage() {
 
               {showItinerary && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  {previewData.itinerary.map((day, index) => (
+                  {previewData.itinerary.map((day, index) => {
+                    const isExpanded = expandedDays.has(day.day_number);
+                    const routeDisplay = day.route_from && day.route_to && day.route_from !== day.route_to
+                      ? `${day.route_from} → ${day.route_to}`
+                      : (day.overnight || day.route_to || day.route_from || '');
+                    
+                    return (
                     <div key={index} className="border-b border-gray-100 last:border-0">
-                      <div className="p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex gap-4">
+                        {/* Day Header - Always Visible */}
+                        <button
+                          onClick={() => toggleDay(day.day_number)}
+                          className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <div className="flex gap-4 items-start">
                           <div className="flex-shrink-0 w-12 h-12 bg-turquoise-100 rounded-lg flex items-center justify-center text-turquoise-700 font-bold">
                             {day.day_number}
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-1">{day.title}</h4>
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{day.description}</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="font-semibold text-gray-900">
+                                  Day {day.day_number}: {day.title}
+                                </h4>
+                                {isExpanded ? (
+                                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                                )}
+                              </div>
+                              {routeDisplay && (
+                                <p className="text-sm text-gray-600 mb-2">{routeDisplay}</p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
 
-                            <div className="flex flex-wrap gap-3 text-xs">
+                        {/* Day Content - Expandable */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pl-20">
+                            {/* Description */}
+                            {day.description && (
+                              <p className="text-sm text-gray-700 mb-4 whitespace-pre-line">
+                                {day.description}
+                              </p>
+                            )}
+
+                            {/* Activities as Chips */}
+                            {day.activities && day.activities.length > 0 && (
+                              <div className="mb-4">
+                                <h5 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Activities:</h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {day.activities.map((activity, actIdx) => {
+                                    const IconComponent = getActivityIcon(activity.type);
+                                    return (
+                                      <div
+                                        key={actIdx}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-turquoise-50 text-turquoise-700 rounded-lg text-xs font-medium"
+                                      >
+                                        <IconComponent className="w-3.5 h-3.5" />
+                                        <span>{activity.name}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Meals and Overnight */}
+                            <div className="flex flex-wrap gap-2">
                               {day.meals && day.meals.length > 0 && (
-                                <div className="flex items-center gap-1.5 text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-xs font-medium">
                                   <Coffee className="w-3.5 h-3.5" />
                                   <span className="capitalize">{day.meals.join(', ')}</span>
                                 </div>
                               )}
                               {day.overnight && (
-                                <div className="flex items-center gap-1.5 text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium">
                                   <Moon className="w-3.5 h-3.5" />
                                   <span>Overnight: {day.overnight}</span>
                                 </div>
                               )}
-                              {day.activities && day.activities.length > 0 && (
-                                <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
-                                  <Camera className="w-3.5 h-3.5" />
-                                  <span>{day.activities.length} Activities</span>
+                            </div>
                                 </div>
                               )}
                             </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Includes/Excludes Preview */}
                   <div className="grid grid-cols-2 gap-6 p-6 bg-gray-50 border-t border-gray-200">
@@ -687,15 +1074,29 @@ export default function ImportPage() {
   );
 }
 
-function ValidationItem({ label, valid }) {
+function ValidationItem({ label, valid, warning = false }) {
   return (
+
     <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+
       <span className="text-sm text-gray-600">{label}</span>
+
       {valid ? (
+
         <CheckCircle className="w-5 h-5 text-green-500" />
+
+      ) : warning ? (
+        <AlertCircle className="w-5 h-5 text-yellow-500" />
       ) : (
+
         <XCircle className="w-5 h-5 text-red-500" />
+
       )}
+
     </div>
+
   );
+
 }
+
+

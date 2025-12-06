@@ -9,8 +9,7 @@ export async function getPackages(filters = {}) {
   try {
     console.log('🔍 [getPackages] Starting fetch with filters:', filters);
 
-    // Select columns from database - using correct column names: nights, days, duration_display
-    // Note: price_currency may not exist in actual database
+    // Select columns from database - ALL fields per Data_Structure.md Section 2 (Search Modal Card)
     let query = supabase
       .from('packages')
       .select(`
@@ -22,14 +21,19 @@ export async function getPackages(filters = {}) {
         days,
         duration_display,
         starting_price,
+        currency,
+        price_note,
         hero_image,
         thumbnail,
-        highlights,
+        travel_styles,
+        is_featured,
+        is_domestic,
         destination_id,
         destinations (
           id,
           name,
-          slug
+          slug,
+          country
         )
       `)
       .eq('is_active', true)
@@ -385,29 +389,56 @@ export async function getPackageDetails(packageId) {
         nights,
         days,
         duration_display,
+        destination_id,
+        cities_covered,
+        stay_breakdown,
+        travel_styles,
+        themes,
+        difficulty,
+        pace,
+        highlights,
+        includes,
+        excludes,
+        important_notes,
+        arrival_point,
+        departure_point,
+        internal_transport,
+        best_months,
+        season_note,
         starting_price,
+        currency,
+        price_note,
         hero_image,
         thumbnail,
-        highlights,
-        destination_id,
+        gallery,
+        is_active,
+        is_featured,
+        is_domestic,
         destinations (
           id,
           name,
-          slug
+          slug,
+          country,
+          region:regions(id, name, slug)
         )
       `)
       .eq('id', packageId)
       .single();
 
     if (packageError || !packageData) {
-      console.error('Error fetching package details:', packageError);
+      console.error('Error fetching package details:', {
+        message: packageError?.message,
+        code: packageError?.code,
+        details: packageError?.details,
+        hint: packageError?.hint
+      });
       return null;
     }
 
-    // Fetch itinerary days with activities
+    // Fetch itinerary days with all fields
     const { data: itineraryData, error: itineraryError } = await supabase
       .from('itinerary_days')
-      .select('activities')
+      .select('*')
       .eq('package_id', packageId)
       .order('day_number', { ascending: true });
 
@@ -415,7 +446,7 @@ export async function getPackageDetails(packageId) {
       console.error('Error fetching itinerary:', itineraryError);
     }
 
-    // Extract all activities with names
+    // Extract all activities with names for key_experiences
     const allActivities = [];
     if (itineraryData) {
       itineraryData.forEach(day => {
@@ -425,6 +456,7 @@ export async function getPackageDetails(packageId) {
               allActivities.push({
                 name: activity.name,
                 type: activity.type || 'other',
+                highlight: activity.highlight || false,
                 description: activity.description || ''
               });
             }
@@ -443,11 +475,13 @@ export async function getPackageDetails(packageId) {
       images.push(packageData.thumbnail);
     }
 
+    // Return complete package data with itinerary per Data_Structure.md Section 4
     return {
       ...packageData,
       activities: allActivities,
       activityTypes: activityTypes,
-      images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1512343879784-a960bf40e5f1?q=80&w=800&h=600&fit=crop']
+      images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1512343879784-a960bf40e5f1?q=80&w=800&h=600&fit=crop'],
+      itinerary: itineraryData || []
     };
   } catch (error) {
     console.error('Error in getPackageDetails:', error);
@@ -469,7 +503,7 @@ export async function getPackageBySlug(slug) {
           name,
           slug,
           country,
-          region
+          region:regions(id, name, slug)
         )
       `)
       .eq('slug', slug)
@@ -831,17 +865,74 @@ export async function getPackagesWithIssues() {
  */
 export async function updatePackage(id, data) {
   try {
+    // Ensure we're using the correct column names (nights, days, not duration_nights, duration_days)
+    const updateData = { ...data };
+    
+    // Convert duration_nights/duration_days to nights/days if present
+    if (updateData.duration_nights !== undefined) {
+      updateData.nights = updateData.duration_nights;
+      delete updateData.duration_nights;
+    }
+    if (updateData.duration_days !== undefined) {
+      updateData.days = updateData.duration_days;
+      delete updateData.duration_days;
+    }
+    
+    // Handle field name mappings if needed
+    // Note: Database may use 'difficulty' or 'difficulty_level' - try both
+    if (updateData.difficulty !== undefined && updateData.difficulty_level === undefined) {
+      // Try difficulty_level first, fallback to difficulty
+      updateData.difficulty_level = updateData.difficulty;
+    }
+    
+    // Handle travel_styles vs travel_style_ids
+    if (updateData.travel_styles !== undefined && updateData.travel_style_ids === undefined) {
+      // If travel_styles is provided as string array, keep it
+      // Database might use travel_styles (TEXT[]) or travel_style_ids (UUID[])
+      // Keep both for compatibility
+    }
+    
+    // Ensure arrays are properly formatted
+    if (updateData.stay_breakdown && !Array.isArray(updateData.stay_breakdown)) {
+      // If it's a JSON string, parse it
+      if (typeof updateData.stay_breakdown === 'string') {
+        try {
+          updateData.stay_breakdown = JSON.parse(updateData.stay_breakdown);
+        } catch (e) {
+          console.warn('Failed to parse stay_breakdown:', e);
+          updateData.stay_breakdown = [];
+        }
+      } else {
+        updateData.stay_breakdown = [];
+      }
+    }
+    
     const { data: updated, error } = await supabase
       .from('packages')
-      .update(data)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ [updatePackage] Supabase error:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      throw error;
+    }
+    
     return { data: updated, error: null };
   } catch (error) {
-    console.error('Error updating package:', error);
+    console.error('❌ [updatePackage] Error updating package:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      stack: error.stack
+    });
     return { data: null, error };
   }
 }
@@ -943,7 +1034,7 @@ export async function getPackageForEdit(id) {
       .from('packages')
       .select(`
         *,
-        destinations (id, name)
+        destinations (id, name, slug)
       `)
       .eq('id', id)
       .single();

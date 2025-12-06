@@ -25,12 +25,13 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Theme management
+  // Theme management - Admin only
   useEffect(() => {
     // Apply theme immediately on mount
     const savedTheme = localStorage.getItem('admin-theme') || 'light';
     const root = document.documentElement;
     
+    // Always apply admin theme when in admin routes
     if (savedTheme === 'dark') {
       root.classList.add('dark');
     } else {
@@ -38,15 +39,18 @@ export default function AdminLayout({ children }) {
     }
     
     setTheme(savedTheme);
-  }, []);
+  }, [pathname]);
 
   const applyTheme = (newTheme) => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
+    // Only apply theme if we're in admin routes
+    if (pathname?.startsWith('/admin')) {
     if (newTheme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
+      }
     }
   };
 

@@ -4,13 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
-import { useTheme } from '@/contexts/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
-
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { theme, toggleTheme } = useTheme();
 
     // Check if modal is open by checking body class
     useEffect(() => {
@@ -57,24 +53,10 @@ export default function Header() {
                         <Link href="/contact" className="text-white hover:text-white/80 transition-colors font-medium">
                             Contact
                         </Link>
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2 text-white hover:text-white/80 transition-colors"
-                            aria-label="Toggle theme"
-                        >
-                            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        </button>
                     </nav>
 
                     {/* Mobile Menu Button */}
                     <div className="flex items-center gap-4 md:hidden">
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2 text-white hover:text-white/80 transition-colors"
-                            aria-label="Toggle theme"
-                        >
-                            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        </button>
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="p-2 text-white"

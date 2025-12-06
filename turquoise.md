@@ -980,7 +980,7 @@ See attached schema and types for data structure.
 
 ---
 
-# Build Truth - Current Implementation Status
+# Turquoise MD - Current Implementation Status
 
 **Last Updated:** January 2025
 

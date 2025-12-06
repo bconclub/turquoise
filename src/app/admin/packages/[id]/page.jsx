@@ -22,6 +22,7 @@ export default function EditPackage() {
     basic: true,
     destination: true,
     content: false,
+    additional: false,
     media: false,
     seo: false,
     itinerary: false,
@@ -47,10 +48,23 @@ export default function EditPackage() {
         highlights: [],
         includes: [],
         excludes: [],
+        important_notes: [],
+        cities_covered: [],
+        stay_breakdown: [],
+        travel_styles: [],
+        themes: [],
+        difficulty: 'easy',
+        pace: 'moderate',
+        arrival_point: '',
+        departure_point: '',
+        internal_transport: [],
+        best_months: [],
+        season_note: '',
         hero_image: '',
         thumbnail: '',
         is_active: true,
         is_featured: false,
+        is_domestic: false,
       });
       setLoading(false);
     }
@@ -98,10 +112,23 @@ export default function EditPackage() {
         highlights: Array.isArray(pkgData.highlights) ? pkgData.highlights : [],
         includes: Array.isArray(pkgData.includes) ? pkgData.includes : [],
         excludes: Array.isArray(pkgData.excludes) ? pkgData.excludes : [],
+        important_notes: Array.isArray(pkgData.important_notes) ? pkgData.important_notes : [],
+        cities_covered: Array.isArray(pkgData.cities_covered) ? pkgData.cities_covered : [],
+        stay_breakdown: Array.isArray(pkgData.stay_breakdown) ? pkgData.stay_breakdown : (pkgData.stay_breakdown ? [pkgData.stay_breakdown] : []),
+        travel_styles: Array.isArray(pkgData.travel_styles) ? pkgData.travel_styles : [],
+        themes: Array.isArray(pkgData.themes) ? pkgData.themes : [],
+        difficulty: pkgData.difficulty || pkgData.difficulty_level || 'easy',
+        pace: pkgData.pace || 'moderate',
+        arrival_point: pkgData.arrival_point || '',
+        departure_point: pkgData.departure_point || '',
+        internal_transport: Array.isArray(pkgData.internal_transport) ? pkgData.internal_transport : [],
+        best_months: Array.isArray(pkgData.best_months) ? pkgData.best_months : [],
+        season_note: pkgData.season_note || '',
         hero_image: pkgData.hero_image || '',
         thumbnail: pkgData.thumbnail || '',
         is_active: pkgData.is_active !== undefined ? pkgData.is_active : true,
         is_featured: pkgData.is_featured || false,
+        is_domestic: pkgData.is_domestic || false,
       };
       
       console.log('📝 Formatted package data:', formattedData);
@@ -125,12 +152,26 @@ export default function EditPackage() {
     setSaving(true);
     try {
       const { error } = await updatePackage(packageId, packageData);
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [handleSave] Update error:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
       alert('Package saved successfully!');
       router.push('/admin/packages');
     } catch (error) {
-      console.error('Error saving package:', error);
-      alert('Failed to save package');
+      console.error('❌ [handleSave] Error saving package:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        stack: error.stack
+      });
+      alert(`Failed to save package: ${error.message || error.code || 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
@@ -462,6 +503,329 @@ export default function EditPackage() {
                 ))}
               </div>
             </div>
+
+            {/* Important Notes */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Important Notes</label>
+                <button
+                  onClick={() => addArrayItem('important_notes')}
+                  className="flex items-center gap-1 text-sm text-turquoise-600 hover:text-turquoise-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(packageData.important_notes || []).map((item, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => updateArrayItem('important_notes', index, e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                    />
+                    <button
+                      onClick={() => removeArrayItem('important_notes', index)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Additional Details */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+        <button
+          onClick={() => toggleSection('additional')}
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Additional Details</h2>
+          {expandedSections.additional ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </button>
+        {expandedSections.additional && (
+          <div className="px-6 py-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
+            {/* Cities Covered */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cities Covered</label>
+                <button
+                  onClick={() => addArrayItem('cities_covered')}
+                  className="flex items-center gap-1 text-sm text-turquoise-600 hover:text-turquoise-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(packageData.cities_covered || []).map((item, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => updateArrayItem('cities_covered', index, e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                      placeholder="City name"
+                    />
+                    <button
+                      onClick={() => removeArrayItem('cities_covered', index)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Stay Breakdown */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Stay Breakdown</label>
+                <button
+                  onClick={() => {
+                    setPackageData(prev => ({
+                      ...prev,
+                      stay_breakdown: [...(prev.stay_breakdown || []), { location: '', nights: 0 }]
+                    }));
+                  }}
+                  className="flex items-center gap-1 text-sm text-turquoise-600 hover:text-turquoise-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(packageData.stay_breakdown || []).map((stay, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={stay.location || ''}
+                      onChange={(e) => {
+                        setPackageData(prev => ({
+                          ...prev,
+                          stay_breakdown: prev.stay_breakdown.map((s, i) => 
+                            i === index ? { ...s, location: e.target.value } : s
+                          )
+                        }));
+                      }}
+                      placeholder="Location"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                    />
+                    <input
+                      type="number"
+                      value={stay.nights || 0}
+                      onChange={(e) => {
+                        setPackageData(prev => ({
+                          ...prev,
+                          stay_breakdown: prev.stay_breakdown.map((s, i) => 
+                            i === index ? { ...s, nights: parseInt(e.target.value) || 0 } : s
+                          )
+                        }));
+                      }}
+                      placeholder="Nights"
+                      className="w-24 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                    />
+                    <button
+                      onClick={() => {
+                        setPackageData(prev => ({
+                          ...prev,
+                          stay_breakdown: prev.stay_breakdown.filter((_, i) => i !== index)
+                        }));
+                      }}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Travel Styles */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Travel Styles</label>
+                <button
+                  onClick={() => addArrayItem('travel_styles')}
+                  className="flex items-center gap-1 text-sm text-turquoise-600 hover:text-turquoise-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(packageData.travel_styles || []).map((item, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => updateArrayItem('travel_styles', index, e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                      placeholder="e.g. cultural, luxury, historical"
+                    />
+                    <button
+                      onClick={() => removeArrayItem('travel_styles', index)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Themes */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Themes</label>
+                <button
+                  onClick={() => addArrayItem('themes')}
+                  className="flex items-center gap-1 text-sm text-turquoise-600 hover:text-turquoise-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(packageData.themes || []).map((item, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => updateArrayItem('themes', index, e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                      placeholder="e.g. ancient-ruins, unesco, river-cruise"
+                    />
+                    <button
+                      onClick={() => removeArrayItem('themes', index)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Difficulty & Pace */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Difficulty</label>
+                <select
+                  value={packageData.difficulty || packageData.difficulty_level || 'easy'}
+                  onChange={(e) => setPackageData(prev => ({ ...prev, difficulty: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                >
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="challenging">Challenging</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pace</label>
+                <select
+                  value={packageData.pace || 'moderate'}
+                  onChange={(e) => setPackageData(prev => ({ ...prev, pace: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                >
+                  <option value="relaxed">Relaxed</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="fast">Fast</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Arrival & Departure Points */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Arrival Point</label>
+                <input
+                  type="text"
+                  value={packageData.arrival_point || ''}
+                  onChange={(e) => setPackageData(prev => ({ ...prev, arrival_point: e.target.value }))}
+                  placeholder="e.g. Cairo International Airport"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Departure Point</label>
+                <input
+                  type="text"
+                  value={packageData.departure_point || ''}
+                  onChange={(e) => setPackageData(prev => ({ ...prev, departure_point: e.target.value }))}
+                  placeholder="e.g. Cairo International Airport"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Internal Transport */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Internal Transport</label>
+                <button
+                  onClick={() => addArrayItem('internal_transport')}
+                  className="flex items-center gap-1 text-sm text-turquoise-600 hover:text-turquoise-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(packageData.internal_transport || []).map((item, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => updateArrayItem('internal_transport', index, e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                      placeholder="e.g. A/C Coach, Domestic Flight, Nile Cruise"
+                    />
+                    <button
+                      onClick={() => removeArrayItem('internal_transport', index)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Best Months & Season Note */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Best Months (1-12, comma-separated)</label>
+              <input
+                type="text"
+                value={(packageData.best_months || []).join(', ')}
+                onChange={(e) => {
+                  const months = e.target.value.split(',').map(m => parseInt(m.trim())).filter(m => !isNaN(m) && m >= 1 && m <= 12);
+                  setPackageData(prev => ({ ...prev, best_months: months }));
+                }}
+                placeholder="e.g. 10, 11, 12, 1, 2, 3, 4"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Season Note</label>
+              <input
+                type="text"
+                value={packageData.season_note || ''}
+                onChange={(e) => setPackageData(prev => ({ ...prev, season_note: e.target.value }))}
+                placeholder="e.g. Best October to April. Avoid summer heat."
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+              />
+            </div>
           </div>
         )}
       </div>
@@ -621,6 +985,29 @@ export default function EditPackage() {
                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
                   ${packageData.is_featured || false ? 'translate-x-6' : 'translate-x-1'}
+                `}
+              />
+            </button>
+          </div>
+          
+          {/* Domestic Toggle */}
+          <div className="flex items-center justify-between">
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Domestic</span>
+            <button
+              type="button"
+              onClick={() => setPackageData(prev => ({ ...prev, is_domestic: !prev.is_domestic }))}
+              className={`
+                relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:ring-offset-2
+                ${packageData.is_domestic || false 
+                  ? 'bg-turquoise-600' 
+                  : 'bg-gray-300 dark:bg-gray-600'
+                }
+              `}
+            >
+              <span
+                className={`
+                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                  ${packageData.is_domestic || false ? 'translate-x-6' : 'translate-x-1'}
                 `}
               />
             </button>

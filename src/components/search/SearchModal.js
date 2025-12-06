@@ -341,7 +341,7 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                 {(showAllCards ? filteredPackages : filteredPackages.slice(0, 20)).map((pkg, index) => (
                 <motion.div
                   key={pkg.id}
@@ -666,51 +666,99 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                 <div className="w-full md:w-1/2 relative flex flex-col overflow-hidden">
                   {/* Scrollable Content */}
                   <div className="overflow-y-auto p-6 md:p-8 text-left flex-1">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 text-left">
+                    {/* 2. HEADER */}
+                    <div className="mb-6">
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                       {packageDetails.title}
                     </h2>
                     {packageDetails.subtitle && (
-                      <p className="text-lg text-gray-600 mb-4 text-left">{packageDetails.subtitle}</p>
+                        <p className="text-lg text-gray-600 mb-3">{packageDetails.subtitle}</p>
                     )}
-                    
-                    {/* Description */}
-                    {packageDetails.description && (
-                      <div className="mb-6 text-left">
-                        <p className="text-gray-700 leading-relaxed whitespace-pre-line text-left">
-                          {packageDetails.description}
-                        </p>
+                      {/* Duration Badge */}
+                      {(packageDetails.duration_display || selectedPackage.duration) && (
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-turquoise-100 text-turquoise-700 rounded-full text-sm font-semibold">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span>{packageDetails.duration_display || selectedPackage.duration}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. DESTINATIONS COVERED */}
+                    {packageDetails.cities_covered && packageDetails.cities_covered.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Destinations Covered</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {packageDetails.cities_covered.map((city, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                              {idx > 0 && <span className="text-gray-400">→</span>}
+                              <span>{city}</span>
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
-                    {/* What's Included (Highlights) */}
+                    {/* 4. STAY BREAKDOWN */}
+                    {packageDetails.stay_breakdown && packageDetails.stay_breakdown.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Stay Breakdown</h3>
+                        <div className="space-y-2">
+                          {packageDetails.stay_breakdown.map((stay, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                              <span className="text-gray-900 font-medium">{stay.location}</span>
+                              <span className="text-gray-600 text-sm">{stay.nights} {stay.nights === 1 ? 'Night' : 'Nights'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 5. HIGHLIGHTS */}
                     {packageDetails.highlights && packageDetails.highlights.length > 0 && (
-                      <div className="mb-6 text-left">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3 text-left">What's Included</h3>
-                        <ul className="space-y-2 text-left">
-                          {packageDetails.highlights.map((highlight, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-gray-700 text-left">
+                      <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Highlights</h3>
+                        <ul className="space-y-2">
+                          {packageDetails.highlights.slice(0, 6).map((highlight, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-gray-700">
                               <Star className="w-5 h-5 text-turquoise-600 flex-shrink-0 mt-0.5" />
-                              <span className="text-left">{highlight}</span>
+                              <span>{highlight}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
 
-                    {/* Activities by Name */}
-                    {packageDetails.activities && packageDetails.activities.length > 0 && (
-                      <div className="mb-6 text-left">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3 text-left">Activities</h3>
-                        <div className="space-y-2 text-left">
-                          {packageDetails.activities.map((activity, idx) => {
+                    {/* 6. KEY EXPERIENCES (Filtered Activities) */}
+                    {(() => {
+                      // Filter activities: exclude transfer and leisure types
+                      const keyExperiences = packageDetails.activities?.filter(activity => 
+                        activity.type !== 'transfer' && 
+                        activity.type !== 'leisure' &&
+                        !activity.name.toLowerCase().includes('arrival') &&
+                        !activity.name.toLowerCase().includes('departure') &&
+                        !activity.name.toLowerCase().includes('check-in') &&
+                        !activity.name.toLowerCase().includes('breakfast') &&
+                        !activity.name.toLowerCase().includes('lunch') &&
+                        !activity.name.toLowerCase().includes('dinner') &&
+                        !activity.name.toLowerCase().includes('overnight')
+                      ) || [];
+
+                      if (keyExperiences.length > 0) {
+                        return (
+                          <div className="mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Key Experiences</h3>
+                            <div className="space-y-2">
+                              {keyExperiences.map((activity, idx) => {
                             const IconComponent = getIconForActivityType(activity.type);
                             return (
-                              <div key={idx} className="flex items-start gap-3 p-2 bg-turquoise-50 rounded-lg text-left">
+                                  <div key={idx} className="flex items-start gap-3 p-3 bg-turquoise-50 rounded-lg">
                                 <IconComponent className="w-5 h-5 text-turquoise-600 flex-shrink-0 mt-0.5" />
-                                <div className="text-left">
-                                  <p className="font-medium text-gray-900 text-left">{activity.name}</p>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-gray-900">{activity.name}</p>
                                   {activity.description && (
-                                    <p className="text-sm text-gray-600 text-left">{activity.description}</p>
+                                        <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
                                   )}
                                 </div>
                               </div>
@@ -718,24 +766,21 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                           })}
                         </div>
                       </div>
-                    )}
+                        );
+                      }
+                      return null;
+                    })()}
 
-                    {/* Package Info */}
-                    <div className="border-t pt-4 mt-auto text-left">
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-4 text-left">
+                    {/* Package Info Footer */}
+                    <div className="border-t pt-4 mt-auto">
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4" />
-                          <span className="text-left">{packageDetails.destinations?.name || selectedPackage.destination}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-left">{packageDetails.duration_display || selectedPackage.duration}</span>
+                          <span>{packageDetails.destinations?.name || selectedPackage.destination}</span>
                         </div>
                       </div>
                       {packageDetails.starting_price && (
-                        <div className="text-xl font-bold text-turquoise-600 mb-4 text-left">
+                        <div className="text-xl font-bold text-turquoise-600 mb-4">
                           From {packageDetails.starting_price.toLocaleString()} {packageDetails.currency || 'INR'}
                         </div>
                       )}
