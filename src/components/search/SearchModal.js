@@ -225,10 +225,15 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
               <input
                 type="text"
                 value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search destinations, packages, or experiences..."
-              className="flex-1 py-3 text-white placeholder-white/70 bg-transparent border-none outline-none"
-              autoFocus
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search destinations, packages, or experiences..."
+                className="flex-1 py-3 text-white placeholder-white/70 bg-transparent border-none outline-none"
+                autoFocus={false}
+                readOnly={false}
+                onFocus={(e) => {
+                  // Only allow focus on explicit user interaction (click/tap)
+                  // This prevents auto-focus on mobile which opens keyboard
+                }}
               />
             </div>
             {/* Close Button */}
@@ -412,7 +417,7 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                   </div>
                   <div className="p-4 flex flex-col flex-1">
                     <div className="mb-3 flex-1">
-                      <h3 className="text-lg md:text-[1.5125rem] font-semibold text-gray-900 group-hover:text-turquoise-600 transition-colors line-clamp-2 text-left mb-2">
+                      <h3 className="text-[1.35rem] md:text-[1.5125rem] font-semibold text-gray-900 group-hover:text-turquoise-600 transition-colors line-clamp-2 text-left mb-2">
                         {pkg.title}
                       </h3>
                       {pkg.subtitle && (
