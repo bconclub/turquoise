@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -69,6 +69,8 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
+  const searchInputRef = useRef(null);
+  const [allowInputFocus, setAllowInputFocus] = useState(false);
 
 
   // Sync searchQuery prop with internal state when modal opens
@@ -97,8 +99,28 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add('modal-open');
+      // Reset allowInputFocus when modal opens - user must click to enable keyboard
+      setAllowInputFocus(false);
+      
+      // Prevent auto-focus on mobile - blur the input if it gets focused automatically
+      // Use a small delay to catch any auto-focus that happens after modal opens
+      const blurTimer = setTimeout(() => {
+        if (searchInputRef.current && document.activeElement === searchInputRef.current) {
+          searchInputRef.current.blur();
+        }
+      }, 100);
+      
+      // Also check immediately
+      if (searchInputRef.current && document.activeElement === searchInputRef.current) {
+        searchInputRef.current.blur();
+      }
+      
+      return () => {
+        clearTimeout(blurTimer);
+      };
     } else {
       document.body.classList.remove('modal-open');
+      setAllowInputFocus(false);
     }
     return () => {
       document.body.classList.remove('modal-open');
@@ -223,16 +245,27 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search destinations, packages, or experiences..."
                 className="flex-1 py-3 text-white placeholder-white/70 bg-transparent border-none outline-none"
                 autoFocus={false}
-                readOnly={false}
+                readOnly={!allowInputFocus}
+                onTouchStart={(e) => {
+                  // Enable focus when user touches the input on mobile
+                  setAllowInputFocus(true);
+                }}
+                onMouseDown={(e) => {
+                  // Enable focus when user clicks the input on desktop
+                  setAllowInputFocus(true);
+                }}
                 onFocus={(e) => {
-                  // Only allow focus on explicit user interaction (click/tap)
-                  // This prevents auto-focus on mobile which opens keyboard
+                  // If focus happens before user interaction, blur it
+                  if (!allowInputFocus) {
+                    e.target.blur();
+                  }
                 }}
               />
             </div>
