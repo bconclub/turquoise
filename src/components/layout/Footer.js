@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, Instagram, Twitter, Facebook, Youtube } from 'lucide-react';
+import { MapPin, Phone, Mail, Instagram, Twitter, Facebook, Youtube, Linkedin } from 'lucide-react';
 
 export default function Footer() {
     return (
@@ -32,7 +32,7 @@ export default function Footer() {
                         {/* Social Media Icons */}
                         <div className="flex gap-4">
                             <a 
-                                href="https://instagram.com" 
+                                href="https://www.instagram.com/turquoiseholidaysindia/" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-10 h-10 flex items-center justify-center hover:opacity-80 transition-opacity"
@@ -50,7 +50,7 @@ export default function Footer() {
                                 <Twitter className="w-5 h-5" />
                             </a>
                             <a 
-                                href="https://facebook.com" 
+                                href="https://www.facebook.com/TurquoiseHolidaysIndia/" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-10 h-10 flex items-center justify-center hover:opacity-80 transition-opacity"
@@ -59,13 +59,22 @@ export default function Footer() {
                                 <Facebook className="w-5 h-5" />
                             </a>
                             <a 
-                                href="https://youtube.com" 
+                                href="https://www.youtube.com/@TurquoiseHolidays" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-10 h-10 flex items-center justify-center hover:opacity-80 transition-opacity"
                                 aria-label="YouTube"
                             >
                                 <Youtube className="w-5 h-5" />
+                            </a>
+                            <a 
+                                href="https://in.linkedin.com/company/turquoise-holidays-india" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="w-10 h-10 flex items-center justify-center hover:opacity-80 transition-opacity"
+                                aria-label="LinkedIn"
+                            >
+                                <Linkedin className="w-5 h-5" />
                             </a>
                         </div>
                     </div>
@@ -75,7 +84,7 @@ export default function Footer() {
                         {/* Google Maps Embed */}
                         <div className="mb-4 rounded-lg overflow-hidden">
                             <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.1234567890123!2d77.6123456!3d13.0123456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzQ0LjQiTiA3N8KwMzYnNDQuNSJF!5e0!3m2!1sen!2sin!4v1234567890123!5m2!1sen!2sin"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.1234567890123!2d77.6488904!3d13.0622232!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae179ed67f2b4d%3A0x783b2ae814059610!2sTurquoise%20Holidays!5e0!3m2!1sen!2sin!4v1234567890123!5m2!1sen!2sin"
                                 width="100%"
                                 height="200"
                                 style={{ border: 0 }}
@@ -91,7 +100,7 @@ export default function Footer() {
                             <div className="flex items-start gap-3">
                                 <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
                                 <span>
-                                    1st Floor, Balaji Building, Hennur Bagalur Main Rd, Kothanur, Bengaluru, Karnataka 560077
+                                    Shop No 4, 1st Floor, Balaji Building, Hennur Bagalur Main Rd, above Ammas Bakery, Kothanur, Bengaluru, Karnataka 560077
                                 </span>
                             </div>
                             <div className="flex items-center gap-3">

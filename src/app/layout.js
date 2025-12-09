@@ -20,7 +20,7 @@ const elMessiri = El_Messiri({
 });
 
 export const metadata = {
-  title: "Turquoise Holidays | Refined Travel Luxury",
+  title: "Turquoise Holidays - Inspiring Destinations Within Your Reach",
   description: "Experience the world with Turquoise Holidays. Premium travel packages, custom itineraries, and unforgettable destinations.",
 };
 
