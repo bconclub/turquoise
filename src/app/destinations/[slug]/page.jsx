@@ -9,6 +9,44 @@ import { MapPin, ArrowLeft, Calendar, DollarSign } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
+// Destination image mapping - maps destination names to appropriate images
+const getDestinationImage = (destinationName) => {
+  if (!destinationName) return null;
+  
+  const name = destinationName.toLowerCase().trim();
+  
+  // Map destination names to specific images
+  const imageMap = {
+    'gujarat': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1200&h=800&fit=crop', // Rann of Kutch
+    'karnataka': 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=1200&h=800&fit=crop', // Hampi ruins
+    'sikkim': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200&h=800&fit=crop', // Mountain landscape
+    'darjeeling': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200&h=800&fit=crop', // Tea gardens
+    'ladakh': 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=80&w=1200&h=800&fit=crop', // Leh landscape
+    'laddakh': 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=80&w=1200&h=800&fit=crop', // Leh landscape
+    'cambodia': 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1200&h=800&fit=crop', // Angkor Wat
+    'jordan': 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?q=80&w=1200&h=800&fit=crop', // Petra
+    'europe': 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?q=80&w=1200&h=800&fit=crop', // European architecture
+    'croatia': 'https://images.unsplash.com/photo-1555993536-0e6c0c0b0a5a?q=80&w=1200&h=800&fit=crop', // Dubrovnik
+    'turkey': 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=1200&h=800&fit=crop', // Cappadocia
+    'south korea': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1200&h=800&fit=crop', // Seoul
+    'korea': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1200&h=800&fit=crop', // Seoul
+  };
+  
+  // Check exact match first
+  if (imageMap[name]) {
+    return imageMap[name];
+  }
+  
+  // Check partial matches
+  for (const [key, value] of Object.entries(imageMap)) {
+    if (name.includes(key) || key.includes(name)) {
+      return value;
+    }
+  }
+  
+  return null;
+};
+
 export default function DestinationDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -77,17 +115,55 @@ export default function DestinationDetailPage() {
       <main className="min-h-screen bg-cream">
         {/* Hero Section */}
         <section className="relative h-[50vh] min-h-[400px]">
-          {destinationData.hero_image ? (
-            <Image
-              src={destinationData.hero_image}
-              alt={destinationData.name}
-              fill
-              className="object-cover"
-              priority
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-turquoise-400 to-turquoise-600" />
-          )}
+          {(() => {
+            // Validate hero_image
+            let heroImageSrc = destinationData.hero_image;
+            const defaultFallback = 'https://images.unsplash.com/photo-1512343879784-a960bf40e5f1?q=80&w=800&h=600&fit=crop';
+            
+            if (heroImageSrc && typeof heroImageSrc === 'string') {
+              const trimmed = heroImageSrc.trim();
+              if (!trimmed || 
+                  trimmed === 'null' || 
+                  trimmed === 'undefined' || 
+                  trimmed.toLowerCase() === 'null' ||
+                  trimmed.toLowerCase() === 'undefined' ||
+                  trimmed.includes('undefined') || 
+                  trimmed.includes('null')) {
+                heroImageSrc = null;
+              } else if (!trimmed.startsWith('http') && !trimmed.startsWith('/') && !trimmed.startsWith('data:')) {
+                heroImageSrc = `/${trimmed}`;
+              }
+            } else {
+              heroImageSrc = null;
+            }
+            
+            // If no valid image, try destination-specific mapping, then default fallback
+            if (!heroImageSrc) {
+              const destinationImage = getDestinationImage(destinationData.name);
+              heroImageSrc = destinationImage || defaultFallback;
+            }
+            
+            return heroImageSrc ? (
+              <Image
+                src={heroImageSrc}
+                alt={destinationData.name}
+                fill
+                className="object-cover"
+                priority
+                onError={(e) => {
+                  // If image fails to load, try destination-specific fallback
+                  const destinationImage = getDestinationImage(destinationData.name);
+                  if (destinationImage && e.target.src !== destinationImage) {
+                    e.target.src = destinationImage;
+                  } else {
+                    e.target.style.display = 'none';
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-turquoise-400 to-turquoise-600" />
+            );
+          })()}
           <div className="absolute inset-0 bg-black/40" />
           
           <div className="container relative z-10 h-full flex flex-col justify-end pb-12 text-white">
@@ -141,18 +217,45 @@ export default function DestinationDetailPage() {
                       href={`/packages/${pkg.slug}`}
                       className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow group"
                     >
-                      {pkg.hero_image || pkg.thumbnail ? (
-                        <div className="relative h-48">
-                          <Image
-                            src={pkg.hero_image || pkg.thumbnail}
-                            alt={pkg.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform"
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-48 bg-gradient-to-br from-turquoise-400 to-turquoise-600" />
-                      )}
+                      {(() => {
+                        const fallbackImage = 'https://images.unsplash.com/photo-1512343879784-a960bf40e5f1?q=80&w=800&h=600&fit=crop';
+                        let pkgImageSrc = pkg.hero_image || pkg.thumbnail || fallbackImage;
+                        
+                        // Validate image
+                        if (pkgImageSrc && typeof pkgImageSrc === 'string') {
+                          const trimmed = pkgImageSrc.trim();
+                          if (!trimmed || 
+                              trimmed === 'null' || 
+                              trimmed === 'undefined' || 
+                              trimmed.toLowerCase() === 'null' ||
+                              trimmed.toLowerCase() === 'undefined' ||
+                              trimmed.includes('undefined') || 
+                              trimmed.includes('null')) {
+                            pkgImageSrc = fallbackImage;
+                          } else if (!trimmed.startsWith('http') && !trimmed.startsWith('/') && !trimmed.startsWith('data:')) {
+                            pkgImageSrc = `/${trimmed}`;
+                          }
+                        } else {
+                          pkgImageSrc = fallbackImage;
+                        }
+                        
+                        return (
+                          <div className="relative h-48">
+                            <Image
+                              src={pkgImageSrc}
+                              alt={pkg.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform"
+                              onError={(e) => {
+                                if (e.target.src !== fallbackImage && !e.target.dataset.fallbackSet) {
+                                  e.target.src = fallbackImage;
+                                  e.target.dataset.fallbackSet = 'true';
+                                }
+                              }}
+                            />
+                          </div>
+                        );
+                      })()}
                       
                       <div className="p-6">
                         <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-turquoise-600 transition-colors">

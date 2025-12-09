@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   Sun,
-  Moon
+  Moon,
+  MapPin
 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -162,6 +163,7 @@ export default function AdminLayout({ children }) {
   const navItems = [
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/packages', icon: Package, label: 'Packages' },
+    { href: '/admin/destinations', icon: MapPin, label: 'Destinations' },
     { href: '/admin/import', icon: Upload, label: 'Import' },
     { href: '/admin/status', icon: Activity, label: 'Status' },
   ];

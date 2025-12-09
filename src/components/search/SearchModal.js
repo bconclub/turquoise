@@ -9,6 +9,7 @@ import {
   Coffee, Star, Landmark, Binoculars, Route, ChevronRight, X, ChevronLeft
 } from 'lucide-react';
 import { getPackages, getDestinations, getTopDestinations, getPackageDetails } from '@/lib/supabase/queries';
+import EnquiryModal from '@/components/EnquiryModal';
 
 const DURATIONS = ['3-5 days', '6-8 days', '9-12 days', '13+ days'];
 
@@ -67,6 +68,7 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
   const [packageDetails, setPackageDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
 
   // Sync searchQuery prop with internal state when modal opens
@@ -576,7 +578,7 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-turquoise-600"></div>
               </div>
             ) : packageDetails ? (
-              <div className="flex flex-col md:flex-row h-full overflow-hidden">
+              <div className="flex flex-col md:flex-row h-full overflow-hidden relative">
                 {/* Image Gallery - Mobile: Top, Desktop: Left */}
                 <div className="w-full md:w-1/2 h-48 md:h-auto bg-gray-100 relative flex-shrink-0">
                   {packageDetails.images && packageDetails.images.length > 0 ? (
@@ -665,7 +667,7 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                 {/* Content - Mobile: Bottom, Desktop: Right */}
                 <div className="w-full md:w-1/2 relative flex flex-col overflow-hidden">
                   {/* Scrollable Content */}
-                  <div className="overflow-y-auto p-6 md:p-8 text-left flex-1">
+                  <div className="overflow-y-auto p-6 md:p-8 text-left flex-1 pb-32 md:pb-36">
                     {/* 2. HEADER */}
                     <div className="mb-6">
                       <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
@@ -785,37 +787,35 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                         </div>
                       )}
                       
-                      {/* View Complete Itinerary Button - Mobile */}
-                      {packageDetails.slug && (
-                        <Link
-                          href={`/packages/${packageDetails.slug}`}
-                          className="block w-full bg-turquoise-600 hover:bg-turquoise-700 text-white text-center py-3 px-6 rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl md:hidden"
-                          onClick={() => {
-                            setSelectedPackage(null);
-                            setPackageDetails(null);
-                            setSelectedImageIndex(0);
-                          }}
-                        >
-                          View Complete Itinerary
-                        </Link>
-                      )}
                     </div>
                   </div>
                   
-                  {/* Sticky Button at Bottom Right - Desktop */}
+                  {/* Floating Action Buttons - Desktop & Mobile */}
                   {packageDetails.slug && (
-                    <div className="sticky bottom-0 p-6 md:p-8 pt-0 bg-white/10 backdrop-blur-xl border-t border-white/20 md:flex hidden justify-center">
-                      <Link
-                        href={`/packages/${packageDetails.slug}`}
-                        className="bg-turquoise-600/90 hover:bg-turquoise-700/90 backdrop-blur-sm text-white py-3 px-8 rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl border border-white/20"
-                        onClick={() => {
-                          setSelectedPackage(null);
-                          setPackageDetails(null);
-                          setSelectedImageIndex(0);
-                        }}
-                      >
-                        View Complete Itinerary
-                      </Link>
+                    <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[calc(100%-2rem)] md:max-w-none flex justify-center px-4">
+                      {/* Glass Background Container */}
+                      <div className="backdrop-blur-xl bg-white/40 dark:bg-gray-900/40 rounded-2xl px-4 py-3 md:px-6 md:py-4 shadow-2xl border border-white/50 dark:border-gray-700/50">
+                        <div className="flex gap-3 md:gap-4">
+                          <button
+                            onClick={() => setEnquiryModalOpen(true)}
+                            className="bg-turquoise-600 hover:bg-turquoise-700 text-white py-3 px-6 md:px-8 rounded-full font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                          >
+                            <span>Enquire Now</span>
+                          </button>
+                          <Link
+                            href={`/packages/${packageDetails.slug}`}
+                            className="bg-white/90 hover:bg-white text-turquoise-600 border-2 border-turquoise-600 py-3 px-6 md:px-8 rounded-full font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                            onClick={() => {
+                              setSelectedPackage(null);
+                              setPackageDetails(null);
+                              setSelectedImageIndex(0);
+                            }}
+                          >
+                            <span className="hidden md:inline">View Complete Itinerary</span>
+                            <span className="md:hidden">View Itinerary</span>
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -828,6 +828,13 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
           </motion.div>
         </div>
       )}
+
+      {/* Enquiry Modal */}
+      <EnquiryModal 
+        isOpen={enquiryModalOpen} 
+        onClose={() => setEnquiryModalOpen(false)}
+        packageData={packageDetails}
+      />
     </div>
   );
 }

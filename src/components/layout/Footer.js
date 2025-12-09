@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPin, Phone, Mail, Instagram, Twitter, Facebook, Youtube } from 'lucide-react';
 
 export default function Footer() {
@@ -13,24 +14,19 @@ export default function Footer() {
                     <div>
                         {/* Logo */}
                         <div className="mb-6">
-                            <div className="relative inline-block mb-2">
-                                {/* Stylized TH Logo */}
-                                <div className="text-6xl font-bold leading-none relative">
-                                    <span className="relative">
-                                        T<span className="text-5xl">H</span>
-                                        {/* Airplane Icon */}
-                                        <svg 
-                                            className="absolute -top-2 -right-6 w-6 h-6" 
-                                            fill="currentColor" 
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                                        </svg>
-                                    </span>
+                            <Link href="/" className="inline-block">
+                                <div className="relative">
+                                    {/* Turquoise Logo Image */}
+                                    <Image 
+                                        src="/TQ-Full.webp" 
+                                        alt="Turquoise Holidays Logo" 
+                                        width={200}
+                                        height={80}
+                                        className="h-20 w-auto object-contain"
+                                        priority
+                                    />
                                 </div>
-                                <div className="text-lg font-semibold mt-1">TURQUOISE</div>
-                                <div className="text-lg font-semibold">HOLIDAYS</div>
-                            </div>
+                            </Link>
                         </div>
                         
                         {/* Social Media Icons */}

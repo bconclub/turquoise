@@ -3,10 +3,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const pathname = usePathname();
+    
+    // Check if we're on the home page
+    const isHomePage = pathname === '/';
+    const isInsidePage = !isHomePage;
 
     // Check if modal is open by checking body class
     useEffect(() => {
@@ -22,7 +28,7 @@ export default function Header() {
     });
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-b border-white/20 transition-opacity duration-300 ${isModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <header className={`${isHomePage ? 'fixed' : 'static'} top-0 left-0 right-0 z-50 ${isInsidePage ? 'bg-turquoise-600' : 'bg-transparent backdrop-blur-sm'} border-b ${isInsidePage ? 'border-turquoise-700' : 'border-white/20'} transition-all duration-300 ${isModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <div className="container py-3 md:py-4 px-4">
                 <div className="flex items-center justify-between gap-2">
                     {/* Logo */}
@@ -31,7 +37,7 @@ export default function Header() {
                             src="/TQ Dark.webp"
                             alt="Turquoise Holidays"
                             fill
-                            className="object-contain brightness-0 invert"
+                            className={`object-contain ${isInsidePage ? 'brightness-0 invert' : 'brightness-0 invert'}`}
                             priority
                         />
                     </Link>

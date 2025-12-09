@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getPackageForEdit, getItineraryDays, updatePackage, updateItineraryDay, createItineraryDay, getDestinations } from '@/lib/supabase/queries';
-import { Save, Eye, ChevronDown, ChevronUp, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Save, Eye, ChevronDown, ChevronUp, Plus, Trash2, Image as ImageIcon, Sparkles, Loader } from 'lucide-react';
 import Link from 'next/link';
 import ImagePicker from '@/components/admin/ImagePicker';
 
@@ -29,6 +29,34 @@ export default function EditPackage() {
   });
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [imagePickerType, setImagePickerType] = useState('hero');
+  const [generating, setGenerating] = useState({ title: false, subtitle: false, description: false });
+  
+  // Helper function to count sentences
+  const countSentences = (text) => {
+    if (!text) return 0;
+    // Count sentences by splitting on sentence-ending punctuation
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    return sentences.length;
+  };
+  
+  // Helper function to limit description to 3 sentences
+  const limitDescription = (text) => {
+    if (!text) return '';
+    const sentences = text.split(/([.!?]+)/).filter(s => s.trim().length > 0);
+    if (sentences.length <= 6) return text; // 3 sentences = 6 parts (sentence + punctuation)
+    
+    // Take first 3 sentences
+    let result = '';
+    let sentenceCount = 0;
+    for (let i = 0; i < sentences.length && sentenceCount < 3; i++) {
+      result += sentences[i];
+      if (/[.!?]/.test(sentences[i])) {
+        sentenceCount++;
+        if (sentenceCount < 3) result += ' ';
+      }
+    }
+    return result.trim();
+  };
 
   useEffect(() => {
     if (!isNew && packageId) {
@@ -171,7 +199,10 @@ export default function EditPackage() {
         hint: error.hint,
         stack: error.stack
       });
-      alert(`Failed to save package: ${error.message || error.code || 'Unknown error'}`);
+      const errorMessage = error.message || error.code || 'Unknown error';
+      const errorDetails = error.details ? `\n\nDetails: ${JSON.stringify(error.details)}` : '';
+      const errorHint = error.hint ? `\n\nHint: ${error.hint}` : '';
+      alert(`Failed to save package: ${errorMessage}${errorDetails}${errorHint}`);
     } finally {
       setSaving(false);
     }
@@ -203,6 +234,61 @@ export default function EditPackage() {
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index),
     }));
+  };
+
+  // Generate content using Claude API
+  const generateWithClaude = async (type) => {
+    if (!packageData) {
+      alert('Package data is required');
+      return;
+    }
+
+    setGenerating(prev => ({ ...prev, [type]: true }));
+
+    try {
+      const destination = destinations.find(d => d.id === packageData.destination_id);
+      const packageDataForClaude = {
+        ...packageData,
+        destination_name: destination?.name || '',
+        itinerary: itineraryDays.map(day => ({
+          title: day.title,
+          description: day.description,
+          activities: day.activities || [],
+          overnight: day.overnight,
+        })),
+      };
+
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type,
+          packageData: packageDataForClaude,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate content');
+      }
+
+      const { content } = await response.json();
+      
+      if (type === 'title') {
+        setPackageData(prev => ({ ...prev, title: content }));
+      } else if (type === 'subtitle') {
+        setPackageData(prev => ({ ...prev, subtitle: content }));
+      } else if (type === 'description') {
+        setPackageData(prev => ({ ...prev, description: content }));
+      }
+    } catch (error) {
+      console.error(`Error generating ${type}:`, error);
+      alert(`Failed to generate ${type}: ${error.message}`);
+    } finally {
+      setGenerating(prev => ({ ...prev, [type]: false }));
+    }
   };
 
   if (loading) {
@@ -264,7 +350,28 @@ export default function EditPackage() {
         {expandedSections.basic && (
           <div className="px-6 py-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title *</label>
+                <button
+                  type="button"
+                  onClick={() => generateWithClaude('title')}
+                  disabled={generating.title}
+                  className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Generate title with AI based on package data"
+                >
+                  {generating.title ? (
+                    <>
+                      <Loader className="w-3.5 h-3.5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Generate with AI
+                    </>
+                  )}
+                </button>
+              </div>
               <input
                 type="text"
                 value={packageData.title || ''}
@@ -274,12 +381,34 @@ export default function EditPackage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subtitle</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Subtitle</label>
+                <button
+                  type="button"
+                  onClick={() => generateWithClaude('subtitle')}
+                  disabled={generating.subtitle}
+                  className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Generate subtitle with AI based on package data"
+                >
+                  {generating.subtitle ? (
+                    <>
+                      <Loader className="w-3.5 h-3.5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Generate with AI
+                    </>
+                  )}
+                </button>
+              </div>
               <input
                 type="text"
                 value={packageData.subtitle || ''}
                 onChange={(e) => setPackageData(prev => ({ ...prev, subtitle: e.target.value }))}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                placeholder="Short tagline or subtitle"
               />
             </div>
             <div>
@@ -293,13 +422,63 @@ export default function EditPackage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Description
+                  <span className="text-xs text-gray-500 ml-2">(Max 3 sentences)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => generateWithClaude('description')}
+                  disabled={generating.description}
+                  className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Generate description with AI based on package data"
+                >
+                  {generating.description ? (
+                    <>
+                      <Loader className="w-3.5 h-3.5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Generate with AI
+                    </>
+                  )}
+                </button>
+              </div>
               <textarea
                 value={packageData.description || ''}
-                onChange={(e) => setPackageData(prev => ({ ...prev, description: e.target.value }))}
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none"
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  const sentenceCount = countSentences(newValue);
+                  
+                  // Limit to 3 sentences
+                  if (sentenceCount > 3) {
+                    const limited = limitDescription(newValue);
+                    setPackageData(prev => ({ ...prev, description: limited }));
+                  } else {
+                    setPackageData(prev => ({ ...prev, description: newValue }));
+                  }
+                }}
+                rows={4}
+                maxLength={500}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none resize-none"
+                placeholder="Package description (2-3 sentences maximum)"
               />
+              {packageData.description && (
+                <div className="mt-1 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    {countSentences(packageData.description)} {countSentences(packageData.description) === 1 ? 'sentence' : 'sentences'}
+                    {countSentences(packageData.description) >= 3 && (
+                      <span className="text-orange-600 ml-2">(Maximum reached)</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {packageData.description.length}/500 characters
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

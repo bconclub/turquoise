@@ -1,3 +1,6 @@
+'use client';
+
+import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
@@ -5,19 +8,48 @@ import Footer from '@/components/layout/Footer';
 import SearchBar from '@/components/search/SearchBar';
 
 export default function Home() {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      if (video.currentTime >= 6) {
+        video.currentTime = 0; // Reset to start to create a loop effect
+      }
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+    };
+  }, []);
+
   return (
     <>
       <Header />
       <main className="min-h-screen">
         {/* Hero Section */}
         <section className="relative h-screen flex items-center justify-center text-white overflow-hidden pt-20 md:pt-24">
-          <Image
-            src="/Home.jpg"
-            alt="Turquoise Holidays - Beautiful travel destination"
-            fill
-            className="object-cover"
-            priority
-          />
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/Header.mp4" type="video/mp4" />
+            {/* Fallback image if video doesn't load */}
+            <Image
+              src="/Home.jpg"
+              alt="Turquoise Holidays - Beautiful travel destination"
+              fill
+              className="object-cover"
+              priority
+            />
+          </video>
           <div className="absolute inset-0 bg-black/40 z-10" />
 
           <div className="container relative z-20 text-center px-4">

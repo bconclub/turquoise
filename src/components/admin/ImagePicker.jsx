@@ -10,8 +10,8 @@ const UNSPLASH_ACCESS_KEY = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY || '')
   : '';
 
-export default function ImagePicker({ type = 'hero', value = '', onChange, onClose }) {
-  const [activeTab, setActiveTab] = useState('stock');
+export default function ImagePicker({ type = 'hero', value = '', onChange, onClose, defaultTab = 'stock' }) {
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [unsplashResults, setUnsplashResults] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { parseDocument } from '@/lib/parser/documentParser';
+import { parseDocumentWithClaude } from '@/lib/parser/claudeParser';
 
 export async function POST(request) {
   try {
@@ -31,17 +31,14 @@ export async function POST(request) {
       );
     }
 
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Parse the document
-    console.log(`Parsing document: ${file.name}`);
-    const parsedData = await parseDocument(buffer);
+    // Parse the document using Claude
+    console.log(`Parsing document with Claude: ${file.name}`);
+    const parsedData = await parseDocumentWithClaude(file);
 
     console.log('Parse successful:', {
       title: parsedData.title,
-      days: parsedData.itinerary.length
+      days: parsedData.itinerary?.length || 0,
+      cities: parsedData.cities_covered?.length || 0
     });
 
     return NextResponse.json(parsedData);

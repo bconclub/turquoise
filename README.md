@@ -2,6 +2,24 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```env
+CLAUDE_API_KEY=your_claude_api_key_here
+# OR
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
+You can get your Anthropic/Claude API key from [https://console.anthropic.com/](https://console.anthropic.com/)
+
+This API key is required for:
+- **AI-powered document parsing**: Automatically extracts structured data from Word documents
+- **Content generation**: Generates titles, subtitles, and descriptions in the admin panel
+
+### Development
+
 First, run the development server:
 
 ```bash

@@ -984,6 +984,8 @@ See attached schema and types for data structure.
 
 **Last Updated:** January 2025
 
+**Deployment:** VPS deployment infrastructure configured with GitHub Actions, PM2, and Nginx
+
 ## Tech Stack (Implemented)
 
 - **Framework:** Next.js 16.0.6 (App Router)
@@ -994,6 +996,7 @@ See attached schema and types for data structure.
 - **Icons:** Lucide React, HugeIcons
 - **Forms:** React Hook Form 7.67.0 + Zod 4.1.13
 - **Fonts:** Playfair Display, DM Sans, El Messiri (via next/font)
+- **AI Integration:** Anthropic Claude API (for document parsing & content generation)
 
 ## Project Structure (Current)
 
@@ -1001,60 +1004,148 @@ See attached schema and types for data structure.
 turquoise/
 ├── src/
 │   ├── app/
-│   │   ├── layout.js              ✅ Root layout with fonts
-│   │   ├── page.js                 ✅ Homepage with hero & sections
-│   │   ├── globals.css             ✅ Tailwind + custom styles
-│   │   ├── favicon.webp            ✅ Custom favicon
-│   │   └── favicon.ico              ✅ Fallback favicon
+│   │   ├── layout.js                    ✅ Root layout with fonts & theme
+│   │   ├── page.js                      ✅ Homepage with hero video & sections
+│   │   ├── globals.css                   ✅ Tailwind + custom styles
+│   │   ├── icon.webp                    ✅ Custom favicon
+│   │   │
+│   │   ├── packages/
+│   │   │   ├── page.jsx                 ✅ Packages listing with filters
+│   │   │   └── [slug]/page.jsx          ✅ Package detail with itinerary
+│   │   │
+│   │   ├── destinations/
+│   │   │   ├── page.jsx                 ✅ Destinations listing by region
+│   │   │   └── [slug]/page.jsx          ✅ Destination detail with packages
+│   │   │
+│   │   ├── admin/
+│   │   │   ├── layout.jsx               ✅ Admin layout with auth
+│   │   │   ├── login/page.jsx           ✅ Admin login page
+│   │   │   ├── dashboard/page.jsx      ✅ Admin dashboard
+│   │   │   ├── import/page.jsx         ✅ Package import interface
+│   │   │   ├── packages/
+│   │   │   │   ├── page.jsx            ✅ Packages management
+│   │   │   │   └── [id]/page.jsx       ✅ Package editor
+│   │   │   └── destinations/
+│   │   │       ├── page.jsx            ✅ Destinations management
+│   │   │       └── [id]/page.jsx       ✅ Destination editor
+│   │   │
+│   │   └── api/
+│   │       ├── parse-document/route.js  ✅ AI document parser (Word docs)
+│   │       ├── generate-content/route.js ✅ AI content generator
+│   │       └── import/route.js          ✅ Package import API
 │   │
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── Header.js           ✅ Fixed header with navigation
-│   │   │   └── Footer.js           ✅ Footer component
+│   │   │   ├── Header.js                ✅ Fixed header with navigation
+│   │   │   └── Footer.js                ✅ Footer with social links
 │   │   │
-│   │   └── search/
-│   │       ├── SearchBar.js        ✅ Homepage search bar with filters
-│   │       └── SearchModal.js      ✅ Full-screen search modal
+│   │   ├── search/
+│   │   │   ├── SearchBar.js             ✅ Homepage search bar
+│   │   │   └── SearchModal.js           ✅ Full-screen search modal
+│   │   │
+│   │   ├── admin/
+│   │   │   └── ImagePicker.jsx          ✅ Image picker component
+│   │   │
+│   │   └── EnquiryModal.jsx             ✅ Inquiry form modal
 │   │
 │   └── lib/
-│       └── supabase/
-│           ├── client.js           ✅ Client-side Supabase client
-│           ├── server.js           ✅ Server-side Supabase client
-│           └── queries.js           ✅ Package & destination queries
+│       ├── supabase/
+│       │   ├── client.js                ✅ Client-side Supabase client
+│       │   ├── server.js                ✅ Server-side Supabase client
+│       │   └── queries.js               ✅ Complete query library
+│       │
+│       └── parser/
+│           └── claudeParser.js           ✅ Claude AI document parser
 │
 ├── public/
-│   ├── Home.jpg                    ✅ Hero background image
-│   └── TQ Dark.webp                ✅ Logo image
+│   ├── Header.mp4                       ✅ Hero video background
+│   ├── Home.jpg                         ✅ Hero fallback image
+│   ├── TQ Dark.webp                     ✅ Logo (dark)
+│   └── TQ-Full.webp                     ✅ Full logo
 │
 ├── supabase/
 │   └── migrations/
-│       └── 001_initial_schema.sql  ✅ Complete database schema
+│       └── 001_initial_schema.sql       ✅ Complete database schema
 │
 ├── scripts/
-│   ├── seed-packages.js            ✅ Package seeding script
-│   ├── check-packages.js            ✅ Package validation script
-│   └── import-packages.js           ✅ Package import utility
+│   ├── seed-packages.js                ✅ Package seeding script
+│   ├── check-packages.js                ✅ Package validation script
+│   └── import-packages.js              ✅ Package import utility
 │
-├── .env.local                      ✅ Environment variables (gitignored)
-├── package.json                    ✅ Dependencies configured
-├── next.config.mjs                  ✅ Next.js configuration
-├── tailwind.config.js               ✅ Tailwind configuration
-└── turquoise.md                     ✅ This documentation file
+├── .github/
+│   └── workflows/
+│       └── deploy.yml                  ✅ GitHub Actions deployment workflow
+│
+├── .env.local                           ✅ Environment variables
+├── package.json                         ✅ Dependencies configured
+├── next.config.mjs                      ✅ Next.js configuration
+├── tailwind.config.js                   ✅ Tailwind configuration
+├── ecosystem.config.js                  ✅ PM2 process manager configuration
+├── deploy.sh                            ✅ VPS deployment script
+├── nginx.conf.example                   ✅ Nginx reverse proxy config template
+├── DEPLOYMENT.md                        ✅ Complete VPS deployment guide
+└── turquoise.md                         ✅ This documentation file
 ```
 
 ## ✅ Implemented Features
 
-### Homepage (`src/app/page.js`)
-- ✅ Hero section with custom background image (`/Home.jpg`)
+### Public Pages
+
+#### Homepage (`src/app/page.js`)
+- ✅ Hero section with video background (`/Header.mp4`) with fallback image
 - ✅ Search bar component with popular destination filters
-- ✅ Exotic destinations showcase section
+- ✅ Exotic destinations showcase section (Switzerland, Thailand, Turkey, Maldives)
 - ✅ Explore by experience section (Vibrant Cities, Historic Travel, Desert Safari)
-- ✅ Why Turquoise Holidays section with benefits
-- ✅ Your Memories gallery section
-- ✅ The Turquoise Way process section
+- ✅ Why Turquoise Holidays section with 4 key benefits
+- ✅ Your Memories gallery section (8-image grid)
+- ✅ The Turquoise Way process section (4-step journey)
 - ✅ CTA section with "Start Planning" button
 
-### Search Functionality
+#### Packages Pages
+- ✅ **Packages Listing** (`src/app/packages/page.jsx`)
+  - Grid layout with package cards
+  - Filter by travel type (All, International, Domestic)
+  - Package count display
+  - Activity type icons with scrollable chips
+  - "Enquire Now" and "View Details" buttons
+  - Responsive grid (1-4 columns)
+  - Framer Motion animations
+
+- ✅ **Package Detail** (`src/app/packages/[slug]/page.jsx`)
+  - Hero section with package image
+  - Package overview with HTML description
+  - Highlights list with checkmarks
+  - Day-by-day itinerary accordion
+    - Expandable day cards
+    - Route information (from/to/distance)
+    - Activities with icons
+    - Meals display
+    - Notes section
+  - Sidebar with package details card
+  - Includes/Excludes sections
+  - Enquiry modal integration
+  - Back navigation
+
+#### Destinations Pages
+- ✅ **Destinations Listing** (`src/app/destinations/page.jsx`)
+  - Grouped by region with region filters
+  - Sticky filter bar
+  - Destination cards with images
+  - Package count per destination
+  - Responsive grid layout
+  - Framer Motion animations
+  - Image fallback system
+
+- ✅ **Destination Detail** (`src/app/destinations/[slug]/page.jsx`)
+  - Hero section with destination image
+  - HTML description support
+  - Packages grid for the destination
+  - Package cards with pricing and duration
+  - Back navigation
+
+### Components
+
+#### Search Functionality
 - ✅ **SearchBar Component** (`src/components/search/SearchBar.js`)
   - Search input with search button
   - Popular destinations filter chips (fetched from Supabase)
@@ -1070,80 +1161,191 @@ turquoise/
   - Fetches packages from Supabase
   - Responsive (mobile & desktop)
 
-### Layout Components
+#### Layout Components
 - ✅ **Header** (`src/components/layout/Header.js`)
   - Fixed header with backdrop blur effect
   - Logo (TQ Dark.webp)
   - Desktop navigation menu
   - Mobile hamburger menu
+  - Dynamic styling based on page context
   - Links: Home, Destinations, Packages, About, Contact
 
 - ✅ **Footer** (`src/components/layout/Footer.js`)
-  - Footer component (structure in place)
+  - Logo and social media links
+  - Quick links navigation
+  - Contact information
+  - Copyright notice
+
+#### Inquiry System
+- ✅ **EnquiryModal Component** (`src/components/EnquiryModal.jsx`)
+  - Modal form with backdrop
+  - Pre-fills package/destination data
+  - Form fields: Name, Email, Mobile, City
+  - Destination multi-select (if no package)
+  - Travel date picker
+  - Adults/Children count
+  - Terms acceptance checkbox
+  - Supabase submission to `inquiries` table
+  - Success confirmation
+  - Error handling
+
+### Admin Panel
+
+#### Admin Pages
+- ✅ **Admin Layout** (`src/app/admin/layout.jsx`)
+  - Authentication protection
+  - Admin navigation
+
+- ✅ **Admin Login** (`src/app/admin/login/page.jsx`)
+  - Login interface
+
+- ✅ **Admin Dashboard** (`src/app/admin/dashboard/page.jsx`)
+  - Dashboard overview
+
+- ✅ **Package Import** (`src/app/admin/import/page.jsx`)
+  - Drag-and-drop file upload
+  - Word document (.docx) parsing via Claude AI
+  - Preview parsed package data
+  - Itinerary day-by-day editor
+  - Activity type selection with icons
+  - Image picker integration
+  - AI content generation (title, subtitle, description)
+  - Destination creation/selection
+  - Package save to Supabase
+  - Comprehensive form validation
+
+- ✅ **Packages Management** (`src/app/admin/packages/page.jsx`)
+  - Packages list view
+
+- ✅ **Package Editor** (`src/app/admin/packages/[id]/page.jsx`)
+  - Package editing interface
+
+- ✅ **Destinations Management** (`src/app/admin/destinations/page.jsx`)
+  - Destinations list view
+
+- ✅ **Destination Editor** (`src/app/admin/destinations/[id]/page.jsx`)
+  - Destination editing interface
+
+#### Admin Components
+- ✅ **ImagePicker** (`src/components/admin/ImagePicker.jsx`)
+  - Image selection interface
+  - Image upload support
+
+### API Routes
+
+- ✅ **Parse Document** (`src/app/api/parse-document/route.js`)
+  - Accepts Word documents (.docx)
+  - Uses Claude AI to extract structured package data
+  - Returns JSON with package and itinerary data
+
+- ✅ **Generate Content** (`src/app/api/generate-content/route.js`)
+  - AI-powered content generation
+  - Generates titles, subtitles, descriptions
+
+- ✅ **Import** (`src/app/api/import/route.js`)
+  - Package import processing
+
+### Deployment Infrastructure
+
+- ✅ **GitHub Actions Workflow** (`.github/workflows/deploy.yml`)
+  - Automatic deployment on push to `main` branch
+  - SSH-based deployment to VPS
+  - Uses GitHub Secrets for secure credentials
+  - Automated build and restart process
+
+- ✅ **PM2 Configuration** (`ecosystem.config.js`)
+  - Process manager configuration
+  - Auto-restart on failure
+  - Logging configuration
+  - Memory limit management
+  - Production environment setup
+
+- ✅ **Deployment Script** (`deploy.sh`)
+  - Automated VPS deployment script
+  - Git pull and dependency installation
+  - Next.js build process
+  - PM2 process restart
+  - Error handling and logging
+
+- ✅ **Nginx Configuration** (`nginx.conf.example`)
+  - Reverse proxy setup
+  - HTTP to HTTPS redirect template
+  - Static file caching
+  - SSL certificate configuration template
+
+- ✅ **Deployment Documentation** (`DEPLOYMENT.md`)
+  - Complete VPS setup guide
+  - Step-by-step installation instructions
+  - GitHub Secrets configuration
+  - Nginx and SSL setup
+  - Troubleshooting guide
+  - Security best practices
 
 ### Database Integration
+
 - ✅ **Supabase Client** (`src/lib/supabase/client.js`)
   - Client-side Supabase initialization
   - Environment variable validation
-  - Error handling
+  - Error handling with localStorage logging
 
 - ✅ **Supabase Server** (`src/lib/supabase/server.js`)
   - Server-side Supabase client with service role
   - Admin operations support
 
 - ✅ **Queries** (`src/lib/supabase/queries.js`)
-  - `getPackages()` - Fetch packages with destination join
-  - `getDestinations()` - Fetch all active destinations
+  - `getPackages()` - Fetch packages with destination join, activity types, filtering
+  - `getPackageBySlug()` - Get single package with full itinerary
+  - `getDestinations()` - Fetch all active destinations with region data
+  - `getDestinationBySlug()` - Get single destination with packages
   - `getTopDestinations()` - Fetch top 3 popular destinations
-  - Duration formatting helper
-  - Filter support (destination, duration, search)
+  - `getPackagesActivityTypes()` - Extract unique activity types from itinerary
+  - `createDestination()` - Create new destination
+  - Duration formatting helpers
+  - Comprehensive filter support (destination, duration, price, search)
+  - Error logging to localStorage for debugging
 
 ### Database Schema (`supabase/migrations/001_initial_schema.sql`)
-- ✅ Regions table
-- ✅ Destinations table (with full metadata)
-- ✅ Travel styles table (pre-populated)
-- ✅ Packages table (comprehensive fields)
-- ✅ Itinerary days table
-- ✅ Inquiries table (lead management)
+- ✅ Regions table (with display_order)
+- ✅ Destinations table (with full metadata, package_count, region_id)
+- ✅ Travel styles table (pre-populated with 8 styles)
+- ✅ Packages table (comprehensive fields including is_domestic)
+- ✅ Itinerary days table (with route, activities JSONB, meals, optionals)
+- ✅ Inquiries table (lead management with UTM tracking)
 - ✅ Testimonials table
-- ✅ Indexes (including full-text search)
+- ✅ Indexes (including full-text search on packages)
 - ✅ Row Level Security (RLS) policies
-- ✅ Triggers (package count, timestamps)
+- ✅ Triggers (package count, timestamps, updated_at)
 
 ### Scripts
 - ✅ `seed-packages.js` - Seed database with sample packages
-- ✅ `check-packages.js` - Validate package data
+- ✅ `check-packages.js` - Validate package data structure
 - ✅ `import-packages.js` - Import packages utility
+
+### AI Integration
+- ✅ **Claude Parser** (`src/lib/parser/claudeParser.js`)
+  - Word document parsing using Anthropic Claude API
+  - Structured data extraction
+  - Itinerary day parsing
 
 ## 🚧 Not Yet Implemented
 
 ### Pages
-- ❌ `/destinations` - Destinations listing page
-- ❌ `/destinations/[slug]` - Destination detail page
-- ❌ `/packages` - Packages listing page
-- ❌ `/packages/[slug]` - Package detail page with itinerary
 - ❌ `/about` - About page
 - ❌ `/contact` - Contact page
 - ❌ `/customize` - Custom trip wizard
-
-### Components
-- ❌ PackageCard component
-- ❌ PackageGrid component
-- ❌ PackageHero component
-- ❌ ItineraryTimeline component
-- ❌ StayBreakdown component
-- ❌ IncludesExcludes component
-- ❌ InquiryForm component
-- ❌ InquirySidebar component
-- ❌ CustomTripWizard component
+- ❌ `/status` - System status page (route exists but content TBD)
 
 ### Features
-- ❌ Package detail page with day-by-day itinerary
-- ❌ Inquiry form submission
-- ❌ Custom trip builder
-- ❌ Testimonials display
-- ❌ Package filtering on packages page
-- ❌ SEO optimization for dynamic pages
+- ❌ Custom trip builder wizard
+- ❌ Testimonials display on homepage
+- ❌ Advanced package filtering (by price range, travel style, difficulty)
+- ❌ Package comparison feature
+- ❌ User accounts and saved packages
+- ❌ Booking system integration
+- ❌ Email notifications for inquiries
+- ❌ SEO optimization for dynamic pages (meta tags, Open Graph)
+- ❌ Analytics integration
+- ❌ Multi-language support
 
 ## Environment Setup
 
@@ -1152,15 +1354,24 @@ turquoise/
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+CLAUDE_API_KEY=your-claude-api-key
+# OR
+ANTHROPIC_API_KEY=your-anthropic-api-key
 ```
 
-### Getting Started
+### Getting Started (Local Development)
 1. Clone repository
 2. Install dependencies: `npm install`
-3. Set up `.env.local` with Supabase credentials
+3. Set up `.env.local` with Supabase and Claude API credentials
 4. Run migrations: Apply `supabase/migrations/001_initial_schema.sql` to Supabase
 5. (Optional) Seed data: `npm run seed`
 6. Start dev server: `npm run dev`
+
+### VPS Deployment Setup
+1. Follow complete guide in `DEPLOYMENT.md`
+2. Configure GitHub Secrets: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_DEPLOY_PATH`
+3. Set up environment variables on VPS in `.env.local`
+4. Push to `main` branch triggers automatic deployment via GitHub Actions
 
 ## Current Design System
 
@@ -1183,22 +1394,33 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 
 ## Known Issues / Notes
 
-1. **Search Modal**: Currently shows all packages from Supabase. Filtering works but needs more robust error handling.
-2. **Destination Filtering**: Uses destination names (strings) - should ideally use IDs for better reliability.
-3. **Package Images**: Falls back to Unsplash if no image in database.
-4. **Duration Formatting**: Maps nights to display strings (3-5 days, 6-8 days, etc.) - may need refinement.
+1. **Package Images**: Falls back to Unsplash if no image in database. Image validation logic handles null/undefined strings.
+2. **Duration Formatting**: Uses `duration_display` field from database, with fallback formatting based on nights.
+3. **Activity Types**: Extracted from itinerary activities, displayed as scrollable icon chips on package cards.
+4. **Admin Authentication**: Admin routes require authentication (implementation details in admin layout).
+5. **Error Logging**: Client-side errors are logged to localStorage for debugging (visible on status page).
+6. **Image Paths**: Supports both absolute URLs and relative paths (with leading slash normalization).
 
 ## Next Steps (Recommended)
 
-1. Build package detail page (`/packages/[slug]`)
-2. Implement itinerary timeline component
-3. Add inquiry form with Supabase submission
-4. Create destinations listing page
-5. Add package filtering on packages page
-6. Implement custom trip wizard
-7. Add testimonials section
-8. SEO optimization for all pages
+1. ✅ ~~Build package detail page~~ - **COMPLETE**
+2. ✅ ~~Implement itinerary timeline component~~ - **COMPLETE** (accordion format)
+3. ✅ ~~Add inquiry form with Supabase submission~~ - **COMPLETE**
+4. ✅ ~~Create destinations listing page~~ - **COMPLETE**
+5. ✅ ~~Add package filtering on packages page~~ - **COMPLETE** (domestic/international)
+6. ✅ ~~Build admin import interface~~ - **COMPLETE**
+7. ✅ ~~Set up VPS deployment infrastructure~~ - **COMPLETE** (GitHub Actions, PM2, Nginx)
+8. ⏳ Implement custom trip wizard (`/customize`)
+8. ⏳ Add About page (`/about`)
+9. ⏳ Add Contact page (`/contact`)
+10. ⏳ Add testimonials section to homepage
+11. ⏳ Advanced package filtering (price range, travel style, difficulty)
+12. ⏳ SEO optimization for dynamic pages (meta tags, Open Graph, structured data)
+13. ⏳ Email notifications for new inquiries
+14. ⏳ Analytics integration (Google Analytics, etc.)
+15. ⏳ Package comparison feature
+16. ⏳ User accounts and saved packages
 
 ---
 
-**Status:** Foundation complete ✅ | Core features in progress 🚧 | Advanced features pending ❌
+**Status:** Core features complete ✅ | Admin panel functional ✅ | Deployment infrastructure ready ✅ | Advanced features pending ⏳

@@ -143,8 +143,11 @@ export async function getPackages(filters = {}) {
         destination: destination?.name || 'Unknown',
         destinationSlug: destination?.slug || '',
         duration: duration,
+        duration_display: pkg.duration_display || duration,
         durationNights: nights,
         durationDays: days,
+        days: days,
+        nights: nights,
         price: pkg.starting_price,
         currency: pkg.price_currency || pkg.currency || 'INR', // Fallback if column doesn't exist
         image: (pkg.hero_image && pkg.hero_image.trim() !== '')
@@ -152,8 +155,12 @@ export async function getPackages(filters = {}) {
           : ((pkg.thumbnail && pkg.thumbnail.trim() !== '')
             ? pkg.thumbnail
             : 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&h=600&fit=crop'),
+        hero_image: pkg.hero_image,
+        thumbnail: pkg.thumbnail,
         highlights: pkg.highlights || [],
-        activityTypes: activityTypesMap[pkg.id] || [] // Unique activity types from itinerary
+        activityTypes: activityTypesMap[pkg.id] || [], // Unique activity types from itinerary
+        is_domestic: pkg.is_domestic || false,
+        destinations: destination // Keep original destination object for compatibility
       };
 
       if (index < 3) {
@@ -217,8 +224,19 @@ export async function getDestinations() {
   try {
     const { data, error } = await supabase
       .from('destinations')
-      .select('id, name, slug')
+      .select(`
+        id,
+        name,
+        slug,
+        country,
+        hero_image,
+        thumbnail,
+        package_count,
+        region_id,
+        region:regions(id, name, slug)
+      `)
       .eq('is_active', true)
+      .order('display_order', { ascending: true })
       .order('name', { ascending: true });
 
     if (error) {
@@ -868,6 +886,30 @@ export async function updatePackage(id, data) {
     // Ensure we're using the correct column names (nights, days, not duration_nights, duration_days)
     const updateData = { ...data };
     
+    // Remove non-database fields (joined/related objects)
+    // These are read-only fields that come from joins, not actual columns
+    const fieldsToRemove = [
+      'destinations',      // Joined object from destination:destinations(...)
+      'itinerary',         // Joined array from itinerary_days
+      'region',            // Joined object from region:regions(...)
+      'destination',       // Alternative name for destinations
+      'created_at',        // Auto-generated, shouldn't be updated
+      'updated_at',        // Auto-generated, shouldn't be updated
+      'id',                // Primary key, shouldn't be updated
+    ];
+    
+    fieldsToRemove.forEach(field => {
+      delete updateData[field];
+    });
+    
+    // Log what we're about to send (for debugging)
+    console.log('📤 [updatePackage] Sending update data:', {
+      id,
+      fields: Object.keys(updateData),
+      hasDestinations: 'destinations' in data,
+      hasItinerary: 'itinerary' in data,
+    });
+    
     // Convert duration_nights/duration_days to nights/days if present
     if (updateData.duration_nights !== undefined) {
       updateData.nights = updateData.duration_nights;
@@ -879,10 +921,15 @@ export async function updatePackage(id, data) {
     }
     
     // Handle field name mappings if needed
-    // Note: Database may use 'difficulty' or 'difficulty_level' - try both
-    if (updateData.difficulty !== undefined && updateData.difficulty_level === undefined) {
-      // Try difficulty_level first, fallback to difficulty
-      updateData.difficulty_level = updateData.difficulty;
+    // Database column might be 'difficulty' or 'difficulty_level'
+    // Remove difficulty_level if present (database doesn't have this column)
+    if (updateData.difficulty_level !== undefined) {
+      // If difficulty is not set, use difficulty_level value
+      if (updateData.difficulty === undefined) {
+        updateData.difficulty = updateData.difficulty_level;
+      }
+      // Always remove difficulty_level as it's not a valid column
+      delete updateData.difficulty_level;
     }
     
     // Handle travel_styles vs travel_style_ids
@@ -907,9 +954,33 @@ export async function updatePackage(id, data) {
       }
     }
     
+    // Final check: remove any remaining object/array fields that aren't valid JSONB columns
+    // Only keep primitive values, arrays of primitives, or valid JSONB structures
+    const validUpdateData = {};
+    const validColumns = [
+      'title', 'subtitle', 'slug', 'description', 'destination_id',
+      'nights', 'days', 'duration_display', 'starting_price', 'currency', 'price_note',
+      'hero_image', 'thumbnail', 'is_active', 'is_featured', 'is_domestic',
+      'highlights', 'includes', 'excludes', 'important_notes',
+      'cities_covered', 'stay_breakdown', 'travel_styles', 'themes',
+      'difficulty', 'pace', 'group_size',
+      'arrival_point', 'departure_point', 'best_time_to_visit',
+      'view_count', 'booking_count'
+    ];
+    
+    for (const key in updateData) {
+      if (validColumns.includes(key)) {
+        validUpdateData[key] = updateData[key];
+      } else {
+        console.warn(`⚠️ [updatePackage] Filtering out invalid column: ${key}`);
+      }
+    }
+    
+    console.log('📤 [updatePackage] Final update data keys:', Object.keys(validUpdateData));
+
     const { data: updated, error } = await supabase
       .from('packages')
-      .update(updateData)
+      .update(validUpdateData)
       .eq('id', id)
       .select()
       .single();
@@ -919,7 +990,8 @@ export async function updatePackage(id, data) {
         message: error.message,
         code: error.code,
         details: error.details,
-        hint: error.hint
+        hint: error.hint,
+        attemptedFields: Object.keys(validUpdateData)
       });
       throw error;
     }
@@ -1106,5 +1178,129 @@ export async function createDestination(name) {
   } catch (error) {
     console.error('Error creating destination:', error);
     return null;
+  }
+}
+
+/**
+ * Get all destinations for admin (including inactive)
+ */
+export async function getAllDestinationsForAdmin() {
+  try {
+    const { data, error } = await supabase
+      .from('destinations')
+      .select(`
+        *,
+        region:regions(id, name, slug)
+      `)
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching destinations for admin:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getAllDestinationsForAdmin:', error);
+    return [];
+  }
+}
+
+/**
+ * Get destination by ID for editing
+ */
+export async function getDestinationForEdit(id) {
+  try {
+    const { data, error } = await supabase
+      .from('destinations')
+      .select(`
+        *,
+        region:regions(id, name, slug)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching destination for edit:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getDestinationForEdit:', error);
+    return null;
+  }
+}
+
+/**
+ * Update destination
+ */
+export async function updateDestination(id, data) {
+  try {
+    const updateData = { ...data };
+    
+    // Remove fields that shouldn't be updated directly
+    const fieldsToRemove = ['id', 'created_at', 'updated_at', 'package_count', 'region'];
+    fieldsToRemove.forEach(field => { delete updateData[field]; });
+
+    // Valid columns in destinations table (only include columns that definitely exist)
+    // Based on actual database schema - some columns from migration may not exist
+    const validColumns = [
+      'name', 'slug', 'country', 'country_code', 'description', 'region_id',
+      'hero_image', 'thumbnail', 'highlights', 'best_months', 'visa_info',
+      'currency', 'language', 'is_featured', 'is_active',
+      'display_order', 'seo_title', 'seo_description'
+      // Excluded: 'timezone', 'starting_price' - may not exist in actual database
+    ];
+
+    // Filter to only include valid columns
+    const filteredData = {};
+    for (const key in updateData) {
+      if (validColumns.includes(key)) {
+        filteredData[key] = updateData[key];
+      } else {
+        console.warn(`⚠️ [updateDestination] Filtering out column: ${key}`);
+      }
+    }
+
+    const { data: updated, error } = await supabase
+      .from('destinations')
+      .update(filteredData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating destination:', error);
+      throw error;
+    }
+
+    return updated;
+  } catch (error) {
+    console.error('Error in updateDestination:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete destination
+ */
+export async function deleteDestination(id) {
+  try {
+    const { error } = await supabase
+      .from('destinations')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting destination:', error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in deleteDestination:', error);
+    throw error;
   }
 }

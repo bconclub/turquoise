@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import EnquiryModal from '@/components/EnquiryModal';
 
 export default function PackageDetailPage() {
   const params = useParams();
@@ -30,6 +31,7 @@ export default function PackageDetailPage() {
   const [packageData, setPackageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedDay, setExpandedDay] = useState(null);
+  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -341,12 +343,12 @@ export default function PackageDetailPage() {
                     )}
                   </div>
                   
-                  <Link
-                    href="/contact"
+                  <button
+                    onClick={() => setEnquiryModalOpen(true)}
                     className="mt-6 w-full bg-turquoise-600 hover:bg-turquoise-700 text-white px-6 py-3 rounded-lg font-semibold text-center block transition-colors"
                   >
                     Enquire Now
-                  </Link>
+                  </button>
                 </div>
 
                 {/* Includes/Excludes */}
@@ -383,6 +385,11 @@ export default function PackageDetailPage() {
         </section>
       </main>
       <Footer />
+      <EnquiryModal 
+        isOpen={enquiryModalOpen} 
+        onClose={() => setEnquiryModalOpen(false)}
+        packageData={packageData}
+      />
     </>
   );
 }

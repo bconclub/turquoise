@@ -28,6 +28,34 @@ export default function ImportPage() {
   const [imagePickerType, setImagePickerType] = useState('hero');
   const [heroImage, setHeroImage] = useState('');
   const [thumbnail, setThumbnail] = useState('');
+  const [generating, setGenerating] = useState({ title: false, subtitle: false, description: false });
+  
+  // Helper function to count sentences
+  const countSentences = (text) => {
+    if (!text) return 0;
+    // Count sentences by splitting on sentence-ending punctuation
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    return sentences.length;
+  };
+  
+  // Helper function to limit description to 3 sentences
+  const limitDescription = (text) => {
+    if (!text) return '';
+    const sentences = text.split(/([.!?]+)/).filter(s => s.trim().length > 0);
+    if (sentences.length <= 6) return text; // 3 sentences = 6 parts (sentence + punctuation)
+    
+    // Take first 3 sentences
+    let result = '';
+    let sentenceCount = 0;
+    for (let i = 0; i < sentences.length && sentenceCount < 3; i++) {
+      result += sentences[i];
+      if (/[.!?]/.test(sentences[i])) {
+        sentenceCount++;
+        if (sentenceCount < 3) result += ' ';
+      }
+    }
+    return result.trim();
+  };
 
   // Add Destination State
   const [isAddingDestination, setIsAddingDestination] = useState(false);
@@ -126,7 +154,56 @@ export default function ImportPage() {
     return 'Travel Package';
   };
 
-  // Auto-generate title when destination is selected and title is empty
+  // Generate content using Claude API
+  const generateWithClaude = async (type) => {
+    if (!previewData) {
+      alert('Please upload and parse a document first');
+      return;
+    }
+
+    setGenerating(prev => ({ ...prev, [type]: true }));
+
+    try {
+      const destination = destinations.find(d => d.id === selectedDestination);
+      const packageDataForClaude = {
+        ...previewData,
+        destination_name: destination?.name || '',
+      };
+
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type,
+          packageData: packageDataForClaude,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate content');
+      }
+
+      const { content } = await response.json();
+      
+      if (type === 'title') {
+        setPreviewData(prev => ({ ...prev, title: content }));
+      } else if (type === 'subtitle') {
+        setPreviewData(prev => ({ ...prev, subtitle: content }));
+      } else if (type === 'description') {
+        setPreviewData(prev => ({ ...prev, description: content }));
+      }
+    } catch (error) {
+      console.error(`Error generating ${type}:`, error);
+      alert(`Failed to generate ${type}: ${error.message}`);
+    } finally {
+      setGenerating(prev => ({ ...prev, [type]: false }));
+    }
+  };
+
+  // Auto-generate title when destination is selected and title is empty (fallback)
   useEffect(() => {
     if (previewData && !previewData.title && selectedDestination && destinations.length > 0) {
       const destination = destinations.find(d => d.id === selectedDestination);
@@ -301,12 +378,42 @@ export default function ImportPage() {
 
       // Prepare package data - ALL fields from Data_Structure.md
       const destination = destinations.find(d => d.id === selectedDestination);
+      
+      // Generate slug from title if not provided
+      const generateSlug = (title) => {
+        if (!title) return 'travel-package';
+        let slug = title
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
+          .replace(/(^-|-$)+/g, ''); // Remove leading/trailing hyphens
+        
+        // Ensure slug is not empty
+        if (!slug || slug.length === 0) {
+          slug = 'travel-package';
+        }
+        
+        // Add timestamp to ensure uniqueness if needed
+        // For now, just return the slug - uniqueness will be handled by database constraint
+        return slug;
+      };
+      
+      const finalTitle = previewData.title || generateTitle(previewData, destination) || 'Travel Package';
+      const finalSlug = previewData.slug && previewData.slug.trim() 
+        ? previewData.slug.trim() 
+        : generateSlug(finalTitle);
+      
+      // Final fallback - should never be empty
+      if (!finalSlug || finalSlug.trim().length === 0) {
+        throw new Error('Unable to generate slug. Please provide a title.');
+      }
+      
       const packageData = {
         // Basic Info
-        title: previewData.title || generateTitle(previewData, destination) || 'Travel Package',
+        title: finalTitle,
         subtitle: previewData.subtitle || null,
         description: previewData.description || null,
-        slug: previewData.slug,
+        slug: finalSlug,
         
         // Destination
         destination_id: selectedDestination,
@@ -587,13 +694,18 @@ export default function ImportPage() {
                   <label className="block text-sm font-medium text-gray-700">Title *</label>
                   {!previewData.title && (
                     <button
-                      onClick={() => {
-                        const generatedTitle = generateTitle(previewData, destinations.find(d => d.id === selectedDestination));
-                        setPreviewData(prev => ({ ...prev, title: generatedTitle }));
-                      }}
-                      className="text-xs text-turquoise-600 hover:text-turquoise-700 font-medium"
+                      onClick={() => generateWithClaude('title')}
+                      disabled={generating.title}
+                      className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Generate Title
+                      {generating.title ? (
+                        <>
+                          <Loader className="w-3 h-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        'Generate with AI'
+                      )}
                     </button>
                   )}
                 </div>
@@ -608,7 +720,23 @@ export default function ImportPage() {
 
               {/* Subtitle Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Subtitle</label>
+                  <button
+                    onClick={() => generateWithClaude('subtitle')}
+                    disabled={generating.subtitle}
+                    className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {generating.subtitle ? (
+                      <>
+                        <Loader className="w-3 h-3 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate with AI'
+                    )}
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={previewData.subtitle || ''}
@@ -620,14 +748,58 @@ export default function ImportPage() {
 
               {/* Description Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description
+                    <span className="text-xs text-gray-500 ml-2">(Max 3 sentences)</span>
+                  </label>
+                  <button
+                    onClick={() => generateWithClaude('description')}
+                    disabled={generating.description}
+                    className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {generating.description ? (
+                      <>
+                        <Loader className="w-3 h-3 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate with AI'
+                    )}
+                  </button>
+                </div>
                 <textarea
                   value={previewData.description || ''}
-                  onChange={(e) => setPreviewData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Package description"
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    const sentenceCount = countSentences(newValue);
+                    
+                    // Limit to 3 sentences
+                    if (sentenceCount > 3) {
+                      const limited = limitDescription(newValue);
+                      setPreviewData(prev => ({ ...prev, description: limited }));
+                    } else {
+                      setPreviewData(prev => ({ ...prev, description: newValue }));
+                    }
+                  }}
+                  placeholder="Package description (2-3 sentences maximum)"
                   rows={4}
+                  maxLength={500}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900 resize-none"
                 />
+                {previewData.description && (
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="text-xs text-gray-500">
+                      {countSentences(previewData.description)} {countSentences(previewData.description) === 1 ? 'sentence' : 'sentences'}
+                      {countSentences(previewData.description) >= 3 && (
+                        <span className="text-orange-600 ml-2">(Maximum reached)</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {previewData.description.length}/500 characters
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

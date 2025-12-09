@@ -24,15 +24,11 @@ export const metadata = {
   description: "Experience the world with Turquoise Holidays. Premium travel packages, custom itineraries, and unforgettable destinations.",
 };
 
-import { ThemeProvider } from "@/contexts/ThemeContext";
-
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable} ${elMessiri.variable}`}>
-      <body className="antialiased font-sans bg-cream text-charcoal">
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+      <body className="antialiased font-sans bg-cream text-charcoal" suppressHydrationWarning>
+        {children}
       </body>
     </html>
   );

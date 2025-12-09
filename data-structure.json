@@ -1,0 +1,397 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "name": "Turquoise Holidays Data Structure",
+    "description": "Single source of truth for all package data. Use this template for parsing and validation.",
+    "lastUpdated": "2025-01-06"
+  },
+
+  "PACKAGE_CARD": {
+    "_description": "Fields needed for search modal grid cards",
+    "_usage": "SearchModal.jsx - package cards in grid",
+    "required": {
+      "id": "uuid",
+      "slug": "string - URL friendly identifier",
+      "title": "string - Package name",
+      "duration_display": "string - Format: 'X Days / Y Nights'",
+      "nights": "number",
+      "days": "number",
+      "hero_image": "string - URL to hero image",
+      "thumbnail": "string - URL to thumbnail",
+      "destination": {
+        "name": "string - Destination name",
+        "country": "string - Country name"
+      },
+      "is_domestic": "boolean - true for India, false for international"
+    },
+    "optional": {
+      "subtitle": "string - Short tagline",
+      "travel_styles": ["array of strings - cultural, adventure, etc"],
+      "starting_price": "number or null",
+      "currency": "string - INR, USD",
+      "price_note": "string - 'Price on request' if no price",
+      "is_featured": "boolean"
+    },
+    "example": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "slug": "cairo-nile-cruise-7d6n",
+      "title": "Cairo & Nile Cruise Adventure",
+      "subtitle": "Pyramids, temples & luxury Nile cruising",
+      "duration_display": "7 Days / 6 Nights",
+      "nights": 6,
+      "days": 7,
+      "hero_image": "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=1200",
+      "thumbnail": "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=400",
+      "destination": {
+        "name": "Egypt",
+        "country": "Egypt"
+      },
+      "is_domestic": false,
+      "is_featured": true,
+      "travel_styles": ["cultural", "luxury"],
+      "starting_price": null,
+      "currency": "USD",
+      "price_note": "Price on request"
+    }
+  },
+
+  "PACKAGE_DETAILED_MODAL": {
+    "_description": "Fields needed when user clicks a card to see details",
+    "_usage": "SearchModal.jsx - expanded package view",
+    "required": {
+      "id": "uuid",
+      "slug": "string",
+      "title": "string",
+      "subtitle": "string",
+      "description": "string - Full description paragraph",
+      "duration_display": "string",
+      "nights": "number",
+      "days": "number",
+      "destination": {
+        "id": "uuid",
+        "name": "string",
+        "slug": "string",
+        "country": "string"
+      },
+      "cities_covered": ["array of city names in order"],
+      "stay_breakdown": [
+        {
+          "location": "string - city/hotel name",
+          "nights": "number"
+        }
+      ],
+      "highlights": ["array of highlight strings - max 6"],
+      "key_experiences": [
+        {
+          "name": "string - experience name",
+          "type": "string - cultural/adventure/sightseeing/shopping",
+          "description": "string - optional short description"
+        }
+      ],
+      "hero_image": "string",
+      "is_domestic": "boolean"
+    },
+    "optional": {
+      "gallery": ["array of image URLs"],
+      "travel_styles": ["array"],
+      "best_months": ["array of month numbers 1-12"],
+      "season_note": "string",
+      "starting_price": "number or null",
+      "price_note": "string"
+    },
+    "example": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "slug": "cairo-nile-cruise-7d6n",
+      "title": "Cairo & Nile Cruise Adventure",
+      "subtitle": "Pyramids, temples & luxury Nile cruising",
+      "description": "Experience the best of Egypt - explore the ancient pyramids of Giza, cruise the Nile visiting magnificent temples, and discover the treasures of the Egyptian Museum.",
+      "duration_display": "7 Days / 6 Nights",
+      "nights": 6,
+      "days": 7,
+      "destination": {
+        "id": "uuid-here",
+        "name": "Egypt",
+        "slug": "egypt",
+        "country": "Egypt"
+      },
+      "cities_covered": ["Cairo", "Aswan", "Kom Ombo", "Edfu", "Luxor"],
+      "stay_breakdown": [
+        { "location": "Cairo", "nights": 3 },
+        { "location": "Nile Cruise", "nights": 3 }
+      ],
+      "highlights": [
+        "Giza Pyramids and Great Sphinx",
+        "Luxury Nile Cruise - Aswan to Luxor",
+        "Valley of the Kings",
+        "Karnak Temple Complex",
+        "Egyptian Museum treasures",
+        "Philae Temple and Felucca ride"
+      ],
+      "key_experiences": [
+        { "name": "Philae Temple", "type": "cultural", "description": "Dedicated to goddess Isis" },
+        { "name": "Felucca Ride", "type": "adventure", "description": "Traditional sailboat tour" },
+        { "name": "Kom Ombo Temple", "type": "cultural", "description": "Dual temple honoring Sobek and Horus" },
+        { "name": "Valley of the Kings", "type": "cultural", "description": "Tombs of pharaohs" },
+        { "name": "Khan El Khalili Bazaar", "type": "shopping", "description": "Famous traditional market" }
+      ],
+      "hero_image": "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=1200",
+      "gallery": [
+        "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?w=1200",
+        "https://images.unsplash.com/photo-1553913861-c0fddf2619ee?w=1200"
+      ],
+      "is_domestic": false,
+      "travel_styles": ["cultural", "luxury"],
+      "best_months": [10, 11, 12, 1, 2, 3, 4],
+      "season_note": "Best October to April"
+    }
+  },
+
+  "ITINERARY_PAGE": {
+    "_description": "Full package page at /packages/[slug]",
+    "_usage": "PackageDetail page",
+    "package": {
+      "id": "uuid",
+      "slug": "string",
+      "title": "string",
+      "subtitle": "string",
+      "description": "string",
+      "duration_display": "string",
+      "nights": "number",
+      "days": "number",
+      "destination": {
+        "id": "uuid",
+        "name": "string",
+        "slug": "string",
+        "country": "string"
+      },
+      "cities_covered": ["array"],
+      "stay_breakdown": [{ "location": "string", "nights": "number" }],
+      "highlights": ["array - 5-8 items"],
+      "includes": ["array - what's included"],
+      "excludes": ["array - what's not included"],
+      "important_notes": ["array - special notes"],
+      "arrival_point": "string - airport/station name",
+      "departure_point": "string",
+      "internal_transport": ["array - A/C Coach, Flight, etc"],
+      "best_months": ["array of numbers 1-12"],
+      "season_note": "string",
+      "hero_image": "string",
+      "gallery": ["array of URLs"],
+      "travel_styles": ["array"],
+      "themes": ["array"],
+      "difficulty": "string - easy/moderate/challenging",
+      "pace": "string - relaxed/moderate/fast",
+      "starting_price": "number or null",
+      "currency": "string",
+      "price_note": "string",
+      "is_domestic": "boolean",
+      "is_featured": "boolean",
+      "is_active": "boolean"
+    },
+    "itinerary": [
+      {
+        "day_number": "number - 1, 2, 3...",
+        "title": "string - Day title",
+        "description": "string - Full day description",
+        "route_from": "string or null - Starting city",
+        "route_to": "string or null - Ending city",
+        "route_mode": "string - drive/flight/train/ferry/walk",
+        "route_distance": "string or null - '120 KM'",
+        "activities": [
+          {
+            "name": "string - Activity name",
+            "type": "string - cultural/sightseeing/adventure/shopping/transfer/leisure",
+            "highlight": "boolean - is this a key experience?",
+            "description": "string - optional description"
+          }
+        ],
+        "meals": ["array - breakfast/lunch/dinner"],
+        "overnight": "string or null - Where staying (null for departure day)",
+        "optionals": [
+          {
+            "name": "string",
+            "price": "string - 'USD 50'",
+            "description": "string"
+          }
+        ],
+        "notes": ["array of special notes for this day"]
+      }
+    ]
+  },
+
+  "ADMIN_PARSER_OUTPUT": {
+    "_description": "What the document parser MUST output",
+    "_usage": "Admin import page - after parsing Word doc",
+    "parsed": "boolean - true if parsing succeeded",
+    "confidence": "number 0-1 - how confident parser is",
+    "warnings": ["array of warnings for user to review"],
+    
+    "package": {
+      "title": "REQUIRED - extracted from document",
+      "slug": "AUTO-GENERATED from title + duration",
+      "subtitle": "OPTIONAL - manual input if not found",
+      "description": "OPTIONAL - manual input if not found",
+      
+      "nights": "REQUIRED - extracted from duration",
+      "days": "REQUIRED - extracted from duration",
+      "duration_display": "AUTO-GENERATED - 'X Days / Y Nights'",
+      
+      "destination_id": "REQUIRED - user must select from dropdown",
+      "cities_covered": "EXTRACTED from itinerary routes",
+      
+      "stay_breakdown": "CALCULATED from overnight values",
+      
+      "travel_styles": "DETECTED or manual selection",
+      "themes": "DETECTED or manual selection",
+      "difficulty": "DEFAULT 'easy'",
+      "pace": "DEFAULT 'moderate'",
+      
+      "highlights": "EXTRACTED if section exists, else manual",
+      
+      "includes": "EXTRACTED from 'Includes' section",
+      "excludes": "EXTRACTED from 'Excludes' section",
+      "important_notes": "EXTRACTED if exists",
+      
+      "arrival_point": "EXTRACTED from Day 1",
+      "departure_point": "EXTRACTED from last day",
+      "internal_transport": "DETECTED from content",
+      
+      "best_months": "MANUAL input",
+      "season_note": "MANUAL input",
+      
+      "hero_image": "REQUIRED - user must select via picker",
+      "thumbnail": "REQUIRED - user must select via picker",
+      "gallery": "OPTIONAL",
+      
+      "is_active": "DEFAULT true",
+      "is_featured": "DEFAULT false",
+      "is_domestic": "AUTO from destination selection"
+    },
+    
+    "itinerary": [
+      {
+        "day_number": "EXTRACTED",
+        "title": "EXTRACTED",
+        "description": "EXTRACTED",
+        "route_from": "EXTRACTED from title or content",
+        "route_to": "EXTRACTED from title or content",
+        "route_mode": "DETECTED from keywords",
+        "activities": "EXTRACTED and categorized",
+        "meals": "EXTRACTED from content",
+        "overnight": "EXTRACTED from content",
+        "optionals": "EXTRACTED if present",
+        "notes": "EXTRACTED if present"
+      }
+    ]
+  },
+
+  "ACTIVITY_TYPES": {
+    "_description": "Standard activity type values and their icons",
+    "types": {
+      "cultural": {
+        "icon": "Landmark",
+        "emoji": "🏛️",
+        "keywords": ["temple", "shrine", "church", "mosque", "monastery", "cathedral", "museum", "gallery", "palace", "castle", "fort", "citadel", "tomb", "pyramid", "ruins", "archaeological"]
+      },
+      "sightseeing": {
+        "icon": "Camera",
+        "emoji": "📸",
+        "keywords": ["viewpoint", "view", "panoramic", "scenic", "garden", "park", "lake", "waterfall", "dam", "tower", "bridge", "landmark"]
+      },
+      "adventure": {
+        "icon": "Mountain",
+        "emoji": "🏔️",
+        "keywords": ["safari", "cruise", "boat", "felucca", "gondola", "trek", "hike", "climb", "rafting", "diving", "snorkel", "jeep", "4x4", "desert", "camel"]
+      },
+      "beach": {
+        "icon": "Waves",
+        "emoji": "🏖️",
+        "keywords": ["beach", "coast", "bay", "island", "swimming", "snorkeling"]
+      },
+      "shopping": {
+        "icon": "ShoppingBag",
+        "emoji": "🛍️",
+        "keywords": ["market", "bazaar", "mall", "shopping", "souk"]
+      },
+      "transfer": {
+        "icon": "Car",
+        "emoji": "🚗",
+        "keywords": ["airport", "transfer", "drive", "flight", "train", "ferry", "check-in", "check-out", "pick up", "drop"]
+      },
+      "leisure": {
+        "icon": "Coffee",
+        "emoji": "☕",
+        "keywords": ["free time", "rest", "relax", "leisure", "spa", "optional", "at leisure"]
+      },
+      "show": {
+        "icon": "Star",
+        "emoji": "🌟",
+        "keywords": ["show", "performance", "sound and light", "concert", "dance"]
+      },
+      "wildlife": {
+        "icon": "Binoculars",
+        "emoji": "🦁",
+        "keywords": ["safari", "wildlife", "zoo", "sanctuary", "national park", "bird watching"]
+      }
+    }
+  },
+
+  "ROUTE_MODES": {
+    "drive": { "icon": "Car", "emoji": "🚗" },
+    "flight": { "icon": "Plane", "emoji": "✈️" },
+    "train": { "icon": "Train", "emoji": "🚂" },
+    "ferry": { "icon": "Ship", "emoji": "⛴️" },
+    "walk": { "icon": "Walking", "emoji": "🚶" }
+  },
+
+  "MEALS": {
+    "breakfast": { "emoji": "🍳", "short": "B" },
+    "lunch": { "emoji": "🍱", "short": "L" },
+    "dinner": { "emoji": "🍽️", "short": "D" }
+  },
+
+  "VALIDATION_RULES": {
+    "_description": "What must be present before saving to database",
+    "required_for_save": [
+      "title",
+      "nights",
+      "days",
+      "destination_id",
+      "hero_image",
+      "thumbnail",
+      "itinerary (at least 1 day)"
+    ],
+    "auto_generated": [
+      "slug (from title + duration)",
+      "duration_display (from nights + days)",
+      "cities_covered (from itinerary)",
+      "stay_breakdown (from overnight values)",
+      "is_domestic (from destination)"
+    ],
+    "manual_if_missing": [
+      "subtitle",
+      "description", 
+      "highlights",
+      "travel_styles",
+      "best_months",
+      "season_note"
+    ]
+  },
+
+  "DURATION_FORMAT": {
+    "_description": "Always format duration as 'X Days / Y Nights'",
+    "pattern": "{days} Days / {nights} Nights",
+    "examples": [
+      { "input": "9N/10D", "output": "10 Days / 9 Nights" },
+      { "input": "4 Nights / 5 Days", "output": "5 Days / 4 Nights" },
+      { "input": "7 Days 6 Nights", "output": "7 Days / 6 Nights" }
+    ]
+  },
+
+  "KEY_EXPERIENCES_FILTER": {
+    "_description": "How to filter activities for Key Experiences display in modal",
+    "include_types": ["cultural", "sightseeing", "adventure", "shopping", "wildlife", "beach"],
+    "exclude_types": ["transfer", "leisure"],
+    "exclude_names": ["airport", "transfer", "check-in", "check-out", "breakfast", "lunch", "dinner", "overnight"]
+  }
+}
