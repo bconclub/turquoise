@@ -1,5 +1,6 @@
 import { Playfair_Display, DM_Sans, El_Messiri } from "next/font/google";
 import "./globals.css";
+import TrackingScripts from "@/components/tracking/TrackingScripts";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable} ${elMessiri.variable}`}>
       <body className="antialiased font-sans bg-cream text-charcoal" suppressHydrationWarning>
+        <TrackingScripts />
         {children}
       </body>
     </html>
