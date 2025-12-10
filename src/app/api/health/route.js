@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { BUILD_TIME } from '@/lib/buildInfo';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -18,6 +19,7 @@ try {
 export async function GET() {
   const health = {
     timestamp: new Date().toISOString(),
+    buildTime: BUILD_TIME || null,
     version: {
       app: packageInfo.version || 'N/A',
       nextjs: packageInfo.dependencies?.next?.replace('^', '').replace('~', '') || 'N/A',

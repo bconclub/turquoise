@@ -18,5 +18,6 @@ jobs:
             cd /var/www/turquoise
             git pull origin main
             npm install
+            export NEXT_PUBLIC_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             npm run build
             pm2 restart turquoise || pm2 start npm --name "turquoise" -- start

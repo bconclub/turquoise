@@ -132,12 +132,17 @@ export default function StatusPage() {
                     <span className="text-gray-600">Node Environment</span>
                     <span className="font-semibold text-gray-900">{status?.version?.node || 'development'}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Last Deployed</span>
                     <span className="font-semibold text-gray-900">
-                      {status?.timestamp ? formatTimeAgo(status.timestamp) : 'N/A'}
+                      {status?.buildTime ? formatTimeAgo(status.buildTime) : 'N/A'}
                     </span>
                   </div>
+                  {status?.buildTime && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatTimestamp(status.buildTime)}
+                    </div>
+                  )}
                 </div>
               </div>
 
