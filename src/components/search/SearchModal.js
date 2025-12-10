@@ -95,6 +95,30 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
     setShowAllCards(false);
   }, [selectedDestination, selectedDuration, searchTerm]);
 
+  // Track modal open in Google Analytics
+  useEffect(() => {
+    if (isOpen && typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'search_modal_open', {
+        'page_title': 'Search | Turquoise Holidays',
+        'page_location': window.location.href + '?modal=search'
+      });
+    }
+  }, [isOpen]);
+
+  // Track search queries in Google Analytics (with debouncing)
+  useEffect(() => {
+    if (isOpen && searchTerm && searchTerm.trim().length > 0 && typeof window !== 'undefined' && window.gtag) {
+      // Debounce search tracking to avoid too many events
+      const searchTimer = setTimeout(() => {
+        window.gtag('event', 'search', {
+          'search_term': searchTerm.trim()
+        });
+      }, 500); // Wait 500ms after user stops typing
+
+      return () => clearTimeout(searchTimer);
+    }
+  }, [searchTerm, isOpen]);
+
   // Hide header when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -394,6 +418,14 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                   }}
                   className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-visible border border-gray-200 cursor-pointer group relative flex flex-col h-full"
                   onClick={async () => {
+                    // Track package click in Google Analytics
+                    if (typeof window !== 'undefined' && window.gtag && pkg.slug) {
+                      window.gtag('event', 'select_content', {
+                        'content_type': 'package',
+                        'item_id': pkg.slug
+                      });
+                    }
+                    
                     setSelectedPackage(pkg);
                     setLoadingDetails(true);
                     setSelectedImageIndex(0);
@@ -844,6 +876,14 @@ export default function SearchModal({ isOpen, onClose, searchQuery = '', initial
                             href={`/packages/${packageDetails.slug}`}
                             className="bg-white/90 hover:bg-white text-turquoise-600 border-2 border-turquoise-600 py-3 px-6 md:px-8 rounded-full font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2 whitespace-nowrap"
                             onClick={() => {
+                              // Track package click in Google Analytics
+                              if (typeof window !== 'undefined' && window.gtag && packageDetails.slug) {
+                                window.gtag('event', 'select_content', {
+                                  'content_type': 'package',
+                                  'item_id': packageDetails.slug
+                                });
+                              }
+                              
                               setSelectedPackage(null);
                               setPackageDetails(null);
                               setSelectedImageIndex(0);

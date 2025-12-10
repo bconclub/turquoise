@@ -1,4 +1,5 @@
 import { getPackageBySlug } from '@/lib/supabase/queries';
+import { supabaseAdmin } from '@/lib/supabase/server';
 import PackageDetailClient from './PackageDetailClient';
 
 export async function generateMetadata({ params }) {
@@ -12,9 +13,23 @@ export async function generateMetadata({ params }) {
   }
 
   try {
-    const packageData = await getPackageBySlug(slug);
+    // Use server-side Supabase client for metadata generation
+    const { data: packageData, error } = await supabaseAdmin
+      .from('packages')
+      .select(`
+        title,
+        subtitle,
+        description,
+        duration_display,
+        destinations (
+          name
+        )
+      `)
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single();
     
-    if (!packageData) {
+    if (error || !packageData) {
       return {
         title: 'Package Not Found | Turquoise Holidays',
         description: 'The requested travel package could not be found.',
