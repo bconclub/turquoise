@@ -14,3 +14,4 @@ export default function NotFound() {
   // Return null or a minimal loading state while redirecting
   return null;
 }
+

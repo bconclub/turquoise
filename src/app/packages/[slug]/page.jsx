@@ -45,7 +45,7 @@ export default function PackageDetailPage() {
       if (!data) {
         if (!hasRedirectedRef.current) {
           hasRedirectedRef.current = true;
-          router.push('/packages');
+        router.push('/packages');
         }
         return;
       }
@@ -54,7 +54,7 @@ export default function PackageDetailPage() {
       console.error('Error loading package:', error);
       if (!hasRedirectedRef.current) {
         hasRedirectedRef.current = true;
-        router.push('/packages');
+      router.push('/packages');
       }
     } finally {
       setLoading(false);
@@ -135,13 +135,17 @@ export default function PackageDetailPage() {
       <main className="min-h-screen bg-cream overflow-auto">
         {/* Hero Section */}
         <section className="relative h-[60vh] min-h-[500px]">
-          {packageData.hero_image ? (
+          {packageData.hero_image && typeof packageData.hero_image === 'string' && packageData.hero_image.trim() ? (
             <Image
               src={packageData.hero_image}
-              alt={packageData.title}
+              alt={packageData.title || 'Package image'}
               fill
               className="object-cover"
               priority
+              onError={(e) => {
+                console.error('Error loading hero image:', packageData.hero_image);
+                e.target.style.display = 'none';
+              }}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-turquoise-400 to-turquoise-600" />
@@ -177,11 +181,11 @@ export default function PackageDetailPage() {
                   <span>{packageData.duration_display}</span>
                 </div>
               )}
-              {packageData.starting_price && (
+              {packageData.starting_price && !isNaN(Number(packageData.starting_price)) && (
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
                   <span>
-                    From {packageData.currency || 'INR'} {packageData.starting_price.toLocaleString()}
+                    From {packageData.currency || 'INR'} {Number(packageData.starting_price).toLocaleString()}
                   </span>
                 </div>
               )}
@@ -228,25 +232,42 @@ export default function PackageDetailPage() {
                     <div className="space-y-4">
                       {itinerary.map((day, index) => {
                         const isExpanded = expandedDay === day.id;
-                        const activities = day.activities || [];
-                        const meals = day.meals || [];
+                        // Ensure activities is an array - handle JSONB parsing
+                        let activities = [];
+                        if (day.activities) {
+                          if (Array.isArray(day.activities)) {
+                            activities = day.activities;
+                          } else if (typeof day.activities === 'string') {
+                            try {
+                              activities = JSON.parse(day.activities);
+                            } catch (e) {
+                              console.error('Error parsing activities:', e);
+                              activities = [];
+                            }
+                          }
+                        }
+                        const meals = Array.isArray(day.meals) ? day.meals : [];
+                        const dayId = day.id || `day-${index}`;
+                        const dayNumber = day.day_number != null && !isNaN(Number(day.day_number)) 
+                          ? Number(day.day_number) 
+                          : index + 1;
                         
                         return (
                           <div
-                            key={day.id}
+                            key={dayId}
                             className="border border-gray-200 rounded-lg overflow-hidden"
                           >
                             <button
-                              onClick={() => setExpandedDay(isExpanded ? null : day.id)}
+                              onClick={() => setExpandedDay(isExpanded ? null : dayId)}
                               className="w-full px-6 py-4 bg-turquoise-50 hover:bg-turquoise-100 transition-colors flex items-center justify-between text-left"
                             >
                               <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-turquoise-600 text-white flex items-center justify-center font-bold text-lg">
-                                  {day.day_number || index + 1}
+                                  {dayNumber}
                                 </div>
                                 <div>
                                   <h3 className="font-semibold text-lg text-gray-900">
-                                    {day.title || `Day ${day.day_number || index + 1}`}
+                                    {day.title || `Day ${dayNumber}`}
                                   </h3>
                                   {day.overnight && (
                                     <p className="text-sm text-gray-600">Overnight: {day.overnight}</p>
@@ -266,12 +287,12 @@ export default function PackageDetailPage() {
                                   <p className="text-gray-700">{day.description}</p>
                                 )}
                                 
-                                {day.route && (
+                                {day.route && typeof day.route === 'object' && (
                                   <div className="flex items-center gap-2 text-sm text-gray-600">
                                     <Plane className="w-4 h-4" />
                                     <span>
-                                      {day.route.from} → {day.route.to}
-                                      {day.route.distance && ` (${day.route.distance})`}
+                                      {day.route.from || ''} → {day.route.to || ''}
+                                      {day.route.distance && typeof day.route.distance === 'string' && ` (${day.route.distance})`}
                                     </span>
                                   </div>
                                 )}
@@ -283,7 +304,7 @@ export default function PackageDetailPage() {
                                       {activities.map((activity, actIndex) => {
                                         const Icon = getActivityIcon(activity.type);
                                         return (
-                                          <li key={actIndex} className="flex items-start gap-3">
+                                          <li key={`activity-${dayId}-${actIndex}`} className="flex items-start gap-3">
                                             <Icon className="w-5 h-5 text-turquoise-600 mt-0.5 flex-shrink-0" />
                                             <div>
                                               <span className="font-medium text-gray-900">
@@ -308,7 +329,7 @@ export default function PackageDetailPage() {
                                     <div className="flex gap-2">
                                       {meals.map((meal, mealIndex) => (
                                         <span
-                                          key={mealIndex}
+                                          key={`meal-${dayId}-${mealIndex}`}
                                           className="px-3 py-1 bg-turquoise-100 text-turquoise-700 rounded-full text-sm capitalize"
                                         >
                                           {meal}
@@ -318,12 +339,12 @@ export default function PackageDetailPage() {
                                   </div>
                                 )}
                                 
-                                {day.notes && day.notes.length > 0 && (
+                                {day.notes && Array.isArray(day.notes) && day.notes.length > 0 && (
                                   <div>
                                     <h4 className="font-semibold text-gray-900 mb-2">Notes</h4>
                                     <ul className="space-y-1">
                                       {day.notes.map((note, noteIndex) => (
-                                        <li key={noteIndex} className="text-sm text-gray-600">
+                                        <li key={`note-${dayId}-${noteIndex}`} className="text-sm text-gray-600">
                                           • {note}
                                         </li>
                                       ))}
@@ -363,11 +384,11 @@ export default function PackageDetailPage() {
                       </div>
                     )}
                     
-                    {packageData.starting_price && (
+                    {packageData.starting_price && !isNaN(Number(packageData.starting_price)) && (
                       <div>
                         <div className="text-sm text-gray-600 mb-1">Starting Price</div>
                         <div className="font-semibold text-turquoise-600 text-xl">
-                          {packageData.currency || 'INR'} {packageData.starting_price.toLocaleString()}
+                          {packageData.currency || 'INR'} {Number(packageData.starting_price).toLocaleString()}
                         </div>
                       </div>
                     )}
