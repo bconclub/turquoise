@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -26,35 +26,65 @@ import EnquiryModal from '@/components/EnquiryModal';
 export default function PackageDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params.slug;
+  const slug = params?.slug;
   
   const [packageData, setPackageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedDay, setExpandedDay] = useState(null);
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
+  const hasRedirectedRef = useRef(false);
+  const isLoadingRef = useRef(false);
 
-  useEffect(() => {
-    if (slug) {
-      loadPackage();
-    }
-  }, [slug]);
-
-  const loadPackage = async () => {
+  const loadPackage = useCallback(async () => {
+    if (!slug || hasRedirectedRef.current || isLoadingRef.current) return;
+    
+    isLoadingRef.current = true;
     setLoading(true);
     try {
       const data = await getPackageBySlug(slug);
       if (!data) {
-        router.push('/packages');
+        if (!hasRedirectedRef.current) {
+          hasRedirectedRef.current = true;
+          router.push('/packages');
+        }
         return;
       }
       setPackageData(data);
     } catch (error) {
       console.error('Error loading package:', error);
-      router.push('/packages');
+      if (!hasRedirectedRef.current) {
+        hasRedirectedRef.current = true;
+        router.push('/packages');
+      }
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
-  };
+  }, [slug, router]);
+
+  useEffect(() => {
+    // Always ensure modal-open class is removed on mount to allow scrolling
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    
+    if (slug) {
+      // Reset redirect flag when slug changes
+      hasRedirectedRef.current = false;
+      loadPackage();
+    }
+    
+    // Cleanup: remove modal-open class when component unmounts
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
+  }, [slug, loadPackage]);
 
   if (loading) {
     return (
@@ -102,7 +132,7 @@ export default function PackageDetailPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-cream">
+      <main className="min-h-screen bg-cream overflow-auto">
         {/* Hero Section */}
         <section className="relative h-[60vh] min-h-[500px]">
           {packageData.hero_image ? (
