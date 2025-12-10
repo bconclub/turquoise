@@ -2,7 +2,7 @@ import { getPackageBySlug } from '@/lib/supabase/queries';
 import PackageDetailClient from './PackageDetailClient';
 
 export async function generateMetadata({ params }) {
-  const slug = params?.slug;
+  const { slug } = await params;
   
   if (!slug) {
     return {
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function PackageDetailPage({ params }) {
-  const slug = params?.slug;
+  const { slug } = await params;
   
   // Pre-fetch package data for initial render
   let initialPackageData = null;
