@@ -21,8 +21,14 @@ export async function generateMetadata({ params }) {
       };
     }
 
+    // Get destination name (can be from destinations relation or destination field)
+    const destinationName = packageData.destinations?.name || packageData.destination || '';
+    const title = destinationName 
+      ? `${destinationName} - ${packageData.title} | Turquoise Holidays`
+      : `${packageData.title} | Turquoise Holidays`;
+
     return {
-      title: `${packageData.title} | Turquoise Holidays`,
+      title,
       description: packageData.subtitle || packageData.description?.replace(/<[^>]*>/g, '').substring(0, 160) || `Explore ${packageData.title} with Turquoise Holidays. ${packageData.duration_display || ''} travel package.`,
     };
   } catch (error) {

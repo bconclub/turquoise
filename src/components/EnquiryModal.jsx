@@ -93,7 +93,7 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
         email: formData.email,
         phone: formData.mobile,
         travel_dates_flexible: !formData.travelDate,
-        preferred_start_date: formData.travelDate || null,
+        travel_date: formData.travelDate || null,
         travelers_adults: parseInt(formData.adults) || 2,
         travelers_children: parseInt(formData.children) || 0,
         travelers_infants: 0,
