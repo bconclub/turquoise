@@ -10,13 +10,14 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    mobile: '',
+    phone: '',
     city: '',
     interestedDestinations: [],
     packageId: packageData?.id || null,
     travelDate: '',
     adults: 2,
     children: 0,
+    flexibility: 'flexible',
     acceptTerms: false
   });
 
@@ -77,7 +78,7 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
 
     try {
       // Validate form
-      if (!formData.name || !formData.email || !formData.mobile) {
+      if (!formData.name || !formData.email || !formData.phone) {
         throw new Error('Please fill in all required fields');
       }
 
@@ -85,24 +86,38 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
         throw new Error('Please accept the terms to proceed');
       }
 
+      // Extract variables for inquiry data
+      const packageId = formData.packageId || null;
+      const packageName = packageData?.title || null;
+      const selectedDestinations = formData.interestedDestinations.length > 0 
+        ? destinations.filter(d => formData.interestedDestinations.includes(d.id)).map(d => d.name)
+        : null;
+
+      // Get UTM parameters from URL
+      const urlParams = typeof window !== 'undefined' 
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams();
+
       // Prepare inquiry data according to database schema
       const inquiryData = {
-        inquiry_type: packageData ? 'package' : 'custom',
-        package_id: formData.packageId || null,
         name: formData.name,
         email: formData.email,
-        phone: formData.mobile,
-        flexibility: !formData.travelDate,
+        phone: formData.phone,
+        city: formData.city,
         travel_date: formData.travelDate || null,
-        travelers_adults: parseInt(formData.adults) || 2,
-        travelers_children: parseInt(formData.children) || 0,
-        travelers_infants: 0,
-        destinations_interested: formData.interestedDestinations.length > 0 
-          ? destinations.filter(d => formData.interestedDestinations.includes(d.id)).map(d => d.name)
-          : [],
-        message: formData.city ? `City: ${formData.city}` : `Interested in: ${packageData?.is_domestic ? 'domestic' : 'international'} travel`,
-        status: 'new',
+        adults: formData.adults,
+        children: formData.children,
+        package_id: packageId,
+        package_title: packageName,
+        destinations_interested: selectedDestinations,
+        flexibility: formData.flexibility || 'flexible',
+        message: formData.message || null,
         source_url: typeof window !== 'undefined' ? window.location.href : '',
+        utm_source: urlParams.get('utm_source') || null,
+        utm_medium: urlParams.get('utm_medium') || null,
+        utm_campaign: urlParams.get('utm_campaign') || null,
+        inquiry_type: packageId ? 'package' : 'general',
+        status: 'new'
       };
 
       const { data, error: insertError } = await supabase
@@ -115,6 +130,37 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
         throw new Error(insertError.message || 'Failed to submit inquiry');
       }
 
+      // Call webhook after successful insert (don't block on failure)
+      try {
+        await fetch('https://build.goproxe.com/webhook/turquoise-website-enquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            city: formData.city,
+            travel_date: formData.travelDate,
+            adults: formData.adults,
+            children: formData.children,
+            package_id: packageId,
+            package_title: packageName,
+            destinations_interested: selectedDestinations,
+            flexibility: formData.flexibility || 'flexible',
+            message: formData.message,
+            source_url: typeof window !== 'undefined' ? window.location.href : '',
+            utm_source: urlParams.get('utm_source'),
+            utm_medium: urlParams.get('utm_medium'),
+            utm_campaign: urlParams.get('utm_campaign'),
+            inquiry_type: packageId ? 'package' : 'general',
+            created_at: new Date().toISOString()
+          })
+        });
+      } catch (webhookError) {
+        // Log webhook error but don't block form success
+        console.error('Webhook call failed:', webhookError);
+      }
+
       setSubmitted(true);
       setTimeout(() => {
         onClose();
@@ -122,13 +168,14 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
         setFormData({
           name: '',
           email: '',
-          mobile: '',
+          phone: '',
           city: '',
           interestedDestinations: [],
           packageId: null,
           travelDate: '',
           adults: 2,
           children: 0,
+          flexibility: 'flexible',
           acceptTerms: false
         });
       }, 2000);
@@ -171,18 +218,18 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
           </button>
 
           {/* Background Image */}
-          <div className="relative h-48 bg-gradient-to-br from-turquoise-500 to-turquoise-700 rounded-t-2xl overflow-hidden">
+          <div className="relative h-24 md:h-32 bg-gradient-to-br from-turquoise-500 to-turquoise-700 rounded-t-2xl overflow-hidden">
             <div className="absolute inset-0 bg-[url('/hero-beach.png')] bg-cover bg-center opacity-30" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent" />
-            <div className="relative h-full flex items-center justify-center text-white px-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-center">
+            <div className="relative h-full flex items-center justify-center text-white px-4 md:px-8">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-center">
                 Let's Plan Your Next Escape
               </h2>
             </div>
           </div>
 
           {/* Form */}
-          <div className="p-6 md:p-8">
+          <div className="p-4 md:p-6 lg:p-8">
             {submitted ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -194,14 +241,14 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                 <p className="text-gray-600">We'll get back to you soon.</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {/* Package/Destination Info */}
                 {(packageData || destinationData) && (
-                  <div className="bg-turquoise-50 border border-turquoise-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center gap-3">
+                  <div className="bg-turquoise-50 border border-turquoise-200 rounded-lg p-3 md:p-4 mb-3">
+                    <div className="flex items-center gap-2 md:gap-3">
                       <MapPin className="w-5 h-5 text-turquoise-600 flex-shrink-0" />
                       <div>
-                        <p className="text-sm text-gray-600">Interested In</p>
+                        <p className="text-sm text-gray-600">Planning Trip</p>
                         <p className="font-semibold text-turquoise-900">
                           {packageData ? packageData.title : destinationData?.name}
                         </p>
@@ -224,7 +271,7 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
+                    className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
                   />
                 </div>
 
@@ -237,20 +284,20 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
+                    className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
                   />
                 </div>
 
-                {/* Mobile */}
+                {/* Phone */}
                 <div>
                   <input
                     type="tel"
-                    name="mobile"
-                    placeholder="Mobile *"
-                    value={formData.mobile}
+                    name="phone"
+                    placeholder="Phone *"
+                    value={formData.phone}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
+                    className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
                   />
                 </div>
 
@@ -262,14 +309,14 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                     placeholder="City"
                     value={formData.city}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
+                    className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
                   />
                 </div>
 
                 {/* Interested Destinations (if no package selected) */}
                 {!packageData && destinations.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Interested Destinations
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-2">
@@ -292,9 +339,9 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                 )}
 
                 {/* Travel Date and Group Size */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Travel Date (Optional)
                     </label>
                     <input
@@ -302,12 +349,12 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                       name="travelDate"
                       value={formData.travelDate}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900"
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 md:gap-3">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Adults
                       </label>
                       <input
@@ -317,11 +364,11 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                         min="1"
                         value={formData.adults}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
+                        className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         Children
                       </label>
                       <input
@@ -331,10 +378,26 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                         min="0"
                         value={formData.children}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
+                        className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none placeholder:text-gray-400 placeholder:opacity-100 text-gray-900"
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Flexibility */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date Flexibility
+                  </label>
+                  <select
+                    name="flexibility"
+                    value={formData.flexibility}
+                    onChange={handleInputChange}
+                    className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900"
+                  >
+                    <option value="flexible">Flexible</option>
+                    <option value="exact">Exact Date</option>
+                  </select>
                 </div>
 
                 {/* Terms Checkbox */}
@@ -363,7 +426,7 @@ export default function EnquiryModal({ isOpen, onClose, packageData = null, dest
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-turquoise-600 hover:bg-turquoise-700 text-white px-6 py-4 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-turquoise-600 hover:bg-turquoise-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Submitting...' : "Let's Plan"}
                 </button>
