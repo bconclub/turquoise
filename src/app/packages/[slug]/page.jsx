@@ -21,8 +21,11 @@ export async function generateMetadata({ params }) {
       };
     }
 
-    // Get destination name (can be from destinations relation or destination field)
-    const destinationName = packageData.destinations?.name || packageData.destination || '';
+    // Get destination name from destinations relation
+    // Supabase returns destinations as an object (not array) for foreign key relationships
+    const destinationName = packageData.destinations?.name || '';
+    
+    // Format title: "{destination.name} - {package.title} | Turquoise Holidays"
     const title = destinationName 
       ? `${destinationName} - ${packageData.title} | Turquoise Holidays`
       : `${packageData.title} | Turquoise Holidays`;
