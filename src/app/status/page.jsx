@@ -121,8 +121,10 @@ export default function StatusPage() {
                 </h2>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">App Version</span>
-                    <span className="font-semibold text-gray-900">{status?.version?.app || 'N/A'}</span>
+                    <span className="text-gray-600">Version</span>
+                    <span className="font-semibold text-gray-900">
+                      {status?.gitCommitMsg || status?.version?.app || 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Next.js Version</span>
