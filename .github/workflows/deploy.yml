@@ -19,6 +19,7 @@ jobs:
             git pull origin main
             export NEXT_PUBLIC_GIT_COMMIT_MSG=$(git log -1 --pretty=%s)
             export NEXT_PUBLIC_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            npm install
+            npm ci --ignore-scripts
+            npm audit --audit-level=high
             npm run build
             pm2 restart turquoise || pm2 start npm --name "turquoise" -- start

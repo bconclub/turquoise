@@ -28,9 +28,18 @@ git fetch origin
 git reset --hard origin/main
 git clean -fd
 
-# Install/update dependencies
-echo "📦 Installing dependencies..."
-npm ci --production=false
+# Remove build artifacts and dependencies for clean install
+echo "🧹 Cleaning previous build artifacts..."
+rm -rf .next
+rm -rf node_modules
+
+# Install/update dependencies with security hardening
+echo "📦 Installing dependencies (with security hardening)..."
+npm ci --ignore-scripts
+
+# Run security audit before build
+echo "🔒 Running security audit..."
+npm audit --audit-level=high
 
 # Build Next.js application
 echo "🔨 Building Next.js application..."
