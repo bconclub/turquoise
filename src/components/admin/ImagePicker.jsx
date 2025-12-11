@@ -10,9 +10,9 @@ const UNSPLASH_ACCESS_KEY = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY || '')
   : '';
 
-export default function ImagePicker({ type = 'hero', value = '', onChange, onClose, defaultTab = 'stock' }) {
+export default function ImagePicker({ type = 'hero', value = '', onChange, onClose, defaultTab = 'stock', initialSearch = '' }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [unsplashResults, setUnsplashResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [unsplashError, setUnsplashError] = useState(null);
@@ -23,6 +23,7 @@ export default function ImagePicker({ type = 'hero', value = '', onChange, onClo
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+  const hasSearchedInitialRef = useRef(false);
 
   // Image size configs based on type
   const imageConfig = {
@@ -136,6 +137,16 @@ export default function ImagePicker({ type = 'hero', value = '', onChange, onClo
       setLoading(false);
     }
   };
+
+  // Auto-search on mount if initialSearch is provided
+  useEffect(() => {
+    if (initialSearch && initialSearch.trim() && activeTab === 'stock' && !hasSearchedInitialRef.current) {
+      hasSearchedInitialRef.current = true;
+      // Trigger search immediately without debounce for initial search
+      searchUnsplash(initialSearch.trim());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSearch, activeTab]);
 
   const handleUnsplashSelect = (photo) => {
     if (!photo || !photo.urls) {

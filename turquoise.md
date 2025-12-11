@@ -989,14 +989,21 @@ See attached schema and types for data structure.
 **Recent Updates:**
 - ✅ SEO metadata implemented for all pages (static and dynamic)
 - ✅ Webhook integration for enquiry form submissions
-- ✅ Thank you page with package display and redirect flow
+- ✅ Thank you page with package display, redirect flow, and Suspense wrapper
 - ✅ Google Analytics tracking (gtag.js) with beforeInteractive strategy
+- ✅ Google Analytics event tracking on thank you page (Package Enquiry Lead)
+- ✅ Search modal Google Analytics events (search_modal_open, search, select_content)
 - ✅ 404 error handling with automatic redirect to homepage
 - ✅ Fixed NaN errors in package detail page
 - ✅ Fixed modal-open class issues preventing page scrolling
 - ✅ Fixed mobile keyboard auto-open on search modal
 - ✅ Updated footer with correct social media links and Google Maps location
 - ✅ Updated contact page with new physical address
+- ✅ System status page with build info and service health monitoring
+- ✅ Build info system with git commit message as version identifier
+- ✅ EnquiryModal mobile optimization (reduced header height, compact inputs)
+- ✅ EnquiryModal form field mapping to match exact database schema
+- ✅ EnquiryModal date flexibility dropdown (Flexible/Exact Date only)
 
 ## Tech Stack (Implemented)
 
@@ -1034,7 +1041,11 @@ turquoise/
 │   │   │   └── [slug]/page.jsx          ✅ Destination detail with packages
 │   │   │
 │   │   ├── thank-you/
-│   │   │   └── page.jsx                 ✅ Thank you page with package display
+│   │   │   ├── page.jsx                 ✅ Thank you page (server component with Suspense)
+│   │   │   └── ThankYouContent.jsx      ✅ Thank you content (client component)
+│   │   │
+│   │   ├── status/
+│   │   │   └── page.jsx                 ✅ System status page with health monitoring
 │   │   │
 │   │   ├── not-found.js                 ✅ 404 redirect to homepage
 │   │   │
@@ -1053,7 +1064,8 @@ turquoise/
 │   │   └── api/
 │   │       ├── parse-document/route.js  ✅ AI document parser (Word docs)
 │   │       ├── generate-content/route.js ✅ AI content generator
-│   │       └── import/route.js          ✅ Package import API
+│   │       ├── import/route.js          ✅ Package import API
+│   │       └── health/route.js          ✅ Health check API with build info
 │   │
 │   ├── components/
 │   │   ├── layout/
@@ -1078,8 +1090,10 @@ turquoise/
 │       │   ├── server.js                ✅ Server-side Supabase client
 │       │   └── queries.js               ✅ Complete query library
 │       │
-│       └── parser/
-│           └── claudeParser.js           ✅ Claude AI document parser
+│       ├── parser/
+│       │   └── claudeParser.js           ✅ Claude AI document parser
+│       │
+│       └── buildInfo.js                  ✅ Build information (build time, git commit)
 │
 ├── public/
 │   ├── Header.mp4                       ✅ Hero video background
@@ -1194,6 +1208,10 @@ turquoise/
   - Responsive (mobile & desktop)
   - Mobile keyboard doesn't auto-open (user must tap input)
   - Prevents screen space loss on mobile devices
+  - Google Analytics event tracking:
+    - `search_modal_open` on modal open
+    - `search` event on search queries (with 500ms debounce)
+    - `select_content` event on package clicks
 
 #### Layout Components
 - ✅ **Header** (`src/components/layout/Header.js`)
@@ -1219,25 +1237,31 @@ turquoise/
 - ✅ **EnquiryModal Component** (`src/components/EnquiryModal.jsx`)
   - Modal form with backdrop
   - Pre-fills package/destination data
-  - Form fields: Name, Email, Mobile, City
+  - Form fields: Name, Email, Phone, City
   - Destination multi-select (if no package)
   - Travel date picker
   - Adults/Children count
+  - Date flexibility dropdown (Flexible/Exact Date)
   - Terms acceptance checkbox
-  - Supabase submission to `inquiries` table
+  - Supabase submission to `inquiries` table (exact schema mapping)
+  - UTM parameter tracking (utm_source, utm_medium, utm_campaign)
   - Webhook POST to `https://build.goproxe.com/webhook/turquoise-website-enquiry`
   - Redirects to `/thank-you` page with query params after success
   - Success confirmation
   - Error handling (webhook failures don't block form success)
   - Modal closes before redirect
+  - Mobile-optimized layout (reduced header height, compact inputs)
+  - Form fields mapped to exact database schema columns
 
-- ✅ **Thank You Page** (`src/app/thank-you/page.jsx`)
+- ✅ **Thank You Page** (`src/app/thank-you/page.jsx` + `ThankYouContent.jsx`)
+  - Server component with Suspense wrapper for `useSearchParams`
   - Personalized thank you message with user name
   - Package card display (if package slug provided)
   - Package image, title, and duration display
   - "Back to Home" and "Browse More Packages" buttons
   - Clean, centered layout
   - Responsive design
+  - Google Analytics event tracking on page load (Package Enquiry Lead)
 
 ### Admin Panel
 
@@ -1308,6 +1332,12 @@ turquoise/
     - Custom tracking scripts
   - Server component for optimal performance
 
+- ✅ **Google Analytics Events**
+  - Search modal open tracking (`search_modal_open`)
+  - Search query tracking (`search` with debouncing)
+  - Package click tracking (`select_content`)
+  - Package enquiry lead tracking (`Package Enquiry Lead` on thank you page)
+
 ### SEO & Metadata
 
 - ✅ **Static Page Metadata**
@@ -1343,6 +1373,8 @@ turquoise/
   - SSH-based deployment to VPS
   - Uses GitHub Secrets for secure credentials
   - Automated build and restart process
+  - Captures git commit message as `NEXT_PUBLIC_GIT_COMMIT_MSG`
+  - Sets build timestamp as `NEXT_PUBLIC_BUILD_TIME`
 
 - ✅ **PM2 Configuration** (`ecosystem.config.js`)
   - Process manager configuration
@@ -1395,6 +1427,30 @@ turquoise/
   - Comprehensive filter support (destination, duration, price, search)
   - Error logging to localStorage for debugging
 
+### Build & System Information
+
+- ✅ **Build Info** (`src/lib/buildInfo.js`)
+  - Exports `BUILD_TIME` from `NEXT_PUBLIC_BUILD_TIME` environment variable
+  - Exports `GIT_COMMIT_MSG` from `NEXT_PUBLIC_GIT_COMMIT_MSG` environment variable
+  - Set during deployment build process
+
+- ✅ **System Status Page** (`src/app/status/page.jsx`)
+  - Real-time system health monitoring
+  - Version display (git commit message)
+  - Build time display (last deployed timestamp)
+  - Service status (Supabase, webhook, API routes)
+  - Database statistics (packages, destinations, inquiries count)
+  - Recent errors display
+  - Auto-refresh every 30 seconds
+
+- ✅ **Health API** (`src/app/api/health/route.js`)
+  - System health check endpoint
+  - Returns build time, git commit message, version info
+  - Tests Supabase connection
+  - Tests webhook endpoint availability
+  - Returns database statistics
+  - Error tracking
+
 ### Database Schema (`supabase/migrations/001_initial_schema.sql`)
 - ✅ Regions table (with display_order)
 - ✅ Destinations table (with full metadata, package_count, region_id)
@@ -1431,9 +1487,9 @@ turquoise/
 ### Pages
 - ✅ `/about` - About page (luxury travel company style, image-rich)
 - ✅ `/contact` - Contact page (with form, updated address, Google Maps)
-- ✅ `/thank-you` - Thank you page (with package display)
+- ✅ `/thank-you` - Thank you page (with package display, Suspense wrapper)
+- ✅ `/status` - System status page (health monitoring, build info, service status)
 - ❌ `/customize` - Custom trip wizard
-- ❌ `/status` - System status page (route exists but content TBD)
 
 ### Features
 - ❌ Custom trip builder wizard
@@ -1521,7 +1577,11 @@ ANTHROPIC_API_KEY=your-anthropic-api-key
 12. ✅ ~~Webhook integration for enquiries~~ - **COMPLETE** (POST to build.goproxe.com)
 13. ✅ ~~Thank you page with redirect flow~~ - **COMPLETE**
 14. ✅ ~~404 error handling~~ - **COMPLETE** (redirect to homepage)
-15. ⏳ Implement custom trip wizard (`/customize`)
+15. ✅ ~~System status page~~ - **COMPLETE** (health monitoring, build info)
+16. ✅ ~~Build info system with git commit message~~ - **COMPLETE**
+17. ✅ ~~Google Analytics event tracking~~ - **COMPLETE** (search, package clicks, enquiry leads)
+18. ✅ ~~EnquiryModal mobile optimization~~ - **COMPLETE** (compact layout, reduced scrolling)
+19. ⏳ Implement custom trip wizard (`/customize`)
 16. ⏳ Add testimonials section to homepage
 17. ⏳ Advanced package filtering (price range, travel style, difficulty)
 18. ⏳ Email notifications for new inquiries

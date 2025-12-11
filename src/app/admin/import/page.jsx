@@ -1238,6 +1238,11 @@ export default function ImportPage() {
                 setImagePickerOpen(false);
               }}
               onClose={() => setImagePickerOpen(false)}
+              initialSearch={
+                imagePickerType === 'hero' && previewData
+                  ? (previewData.destination?.primary || previewData.destination?.name || destinations.find(d => d.id === selectedDestination)?.name || '')
+                  : ''
+              }
             />
           </div>
         </div>
