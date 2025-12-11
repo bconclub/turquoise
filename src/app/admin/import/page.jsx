@@ -18,6 +18,7 @@ export default function ImportPage() {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState('');
   const [previewData, setPreviewData] = useState(null);
   const [destinations, setDestinations] = useState([]);
   const [selectedDestination, setSelectedDestination] = useState('');
@@ -272,12 +273,17 @@ export default function ImportPage() {
     setProcessing(true);
     setPreviewData(null);
     setSaveError(null);
+    setProcessingStatus('Uploading file...');
 
     try {
       const formData = new FormData();
       files.forEach((file, index) => {
         formData.append(`file${index}`, file);
       });
+
+      // Simulate upload progress
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setProcessingStatus('Processing document...');
 
       const response = await fetch('/api/import', {
         method: 'POST',
@@ -289,13 +295,20 @@ export default function ImportPage() {
         throw new Error(errorData.error || 'Upload failed');
       }
 
+      setProcessingStatus('Parsing with AI...');
+      
       const data = await response.json();
+      
+      setProcessingStatus('Extracting data...');
       
       // Auto-generate title if missing
       if (!data.title) {
         // We'll generate it after destination is selected, but set a placeholder
         data.title = '';
       }
+      
+      setProcessingStatus('Finalizing...');
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       setPreviewData(data);
 
@@ -306,9 +319,12 @@ export default function ImportPage() {
       // Reset expanded days to Day 1
       setExpandedDays(new Set([1]));
 
+      setProcessingStatus('');
+
     } catch (error) {
       console.error('Upload error:', error);
       setSaveError(error.message || 'Failed to upload and process files');
+      setProcessingStatus('');
     } finally {
       setUploading(false);
       setProcessing(false);
@@ -636,6 +652,21 @@ export default function ImportPage() {
                   'Upload & Process'
                 )}
               </button>
+              
+              {/* Status Bar */}
+              {(uploading || processing) && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span className="flex items-center gap-2">
+                      <Loader className="w-4 h-4 animate-spin text-turquoise-600" />
+                      {processingStatus || 'Processing...'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div className="h-full bg-turquoise-600 rounded-full animate-pulse" style={{ width: '100%' }} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -692,28 +723,26 @@ export default function ImportPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-gray-700">Title *</label>
-                  {!previewData.title && (
-                    <button
-                      onClick={() => generateWithClaude('title')}
-                      disabled={generating.title}
-                      className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {generating.title ? (
-                        <>
-                          <Loader className="w-3 h-3 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        'Generate with AI'
-                      )}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => generateWithClaude('title')}
+                    disabled={generating.title || !previewData}
+                    className="flex items-center gap-1 text-xs text-turquoise-600 hover:text-turquoise-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {generating.title ? (
+                      <>
+                        <Loader className="w-3 h-3 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate with AI'
+                    )}
+                  </button>
                 </div>
                 <input
                   type="text"
                   value={previewData.title || ''}
                   onChange={(e) => setPreviewData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter package title or click 'Generate Title'"
+                  placeholder="Enter package title or click 'Generate with AI'"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent outline-none text-gray-900"
                 />
               </div>
@@ -1227,6 +1256,7 @@ export default function ImportPage() {
               </button>
             </div>
             <ImagePicker
+              key={imagePickerType}
               type={imagePickerType}
               value={imagePickerType === 'hero' ? heroImage : thumbnail}
               onChange={(url) => {
@@ -1239,7 +1269,7 @@ export default function ImportPage() {
               }}
               onClose={() => setImagePickerOpen(false)}
               initialSearch={
-                imagePickerType === 'hero' && previewData
+                previewData
                   ? (previewData.destination?.primary || previewData.destination?.name || destinations.find(d => d.id === selectedDestination)?.name || '')
                   : ''
               }

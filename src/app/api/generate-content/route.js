@@ -131,13 +131,14 @@ ${itinerarySummary}
 ${staySummary}
 
 Requirements:
-- Maximum 12 words
+- Exactly 4-5 words (catchy and concise)
 - Include destination name if available
-- Include key cities if space allows (max 2-3 cities)
+- Include key cities if space allows (max 1-2 cities)
 - Include travel style or theme if relevant
 - Make it compelling and professional
 - No generic words like "Amazing" or "Incredible"
 - Format: "Destination City1 & City2 [Style/Theme] Tour" or similar
+- Examples: "Paris & Loire Valley Heritage Tour", "Egyptian Nile Cruise Experience"
 
 Generate ONLY the title, nothing else.`;
   }

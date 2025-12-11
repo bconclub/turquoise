@@ -138,12 +138,26 @@ export default function ImagePicker({ type = 'hero', value = '', onChange, onClo
     }
   };
 
-  // Auto-search on mount if initialSearch is provided
+  // Update searchQuery when initialSearch prop changes
   useEffect(() => {
-    if (initialSearch && initialSearch.trim() && activeTab === 'stock' && !hasSearchedInitialRef.current) {
-      hasSearchedInitialRef.current = true;
-      // Trigger search immediately without debounce for initial search
-      searchUnsplash(initialSearch.trim());
+    if (initialSearch && initialSearch.trim()) {
+      setSearchQuery(initialSearch.trim());
+    }
+  }, [initialSearch]);
+
+  // Auto-search on mount or when initialSearch/activeTab changes if initialSearch is provided
+  useEffect(() => {
+    if (initialSearch && initialSearch.trim() && activeTab === 'stock') {
+      // Use a small delay to ensure state is updated, then search
+      const timer = setTimeout(() => {
+        if (!hasSearchedInitialRef.current || searchQuery !== initialSearch.trim()) {
+          hasSearchedInitialRef.current = true;
+          searchUnsplash(initialSearch.trim());
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      hasSearchedInitialRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSearch, activeTab]);
@@ -557,4 +571,3 @@ export default function ImagePicker({ type = 'hero', value = '', onChange, onClo
     </div>
   );
 }
-
