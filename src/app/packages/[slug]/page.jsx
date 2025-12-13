@@ -1,4 +1,4 @@
-import { getPackageBySlug } from '@/lib/supabase/queries';
+import { getPackageBySlug } from '@/lib/supabase/server-queries';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import PackageDetailClient from './PackageDetailClient';
 
@@ -63,12 +63,38 @@ export default async function PackageDetailPage({ params }) {
   
   // Pre-fetch package data for initial render
   let initialPackageData = null;
+  let error = null;
+  
   if (slug) {
     try {
       initialPackageData = await getPackageBySlug(slug);
-    } catch (error) {
-      console.error('Error pre-fetching package:', error);
+      if (!initialPackageData) {
+        error = 'Package not found';
+      }
+    } catch (err) {
+      console.error('Error pre-fetching package:', err);
+      error = err.message || 'Failed to load package';
     }
+  } else {
+    error = 'Invalid package slug';
+  }
+
+  // Return fallback UI if there's an error
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md mx-auto p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Package Not Found</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <a
+            href="/packages"
+            className="inline-block px-6 py-3 bg-turquoise-600 hover:bg-turquoise-700 text-white rounded-lg font-semibold transition-colors"
+          >
+            Browse Packages
+          </a>
+        </div>
+      </div>
+    );
   }
 
   return <PackageDetailClient initialPackageData={initialPackageData} slug={slug} />;

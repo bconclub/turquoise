@@ -148,6 +148,16 @@ export default function PackagesPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredPackages.map((pkg, index) => {
+                  // Debug: Log activityTypes for each package
+                  if (index < 5) {
+                    console.log(`📦 [PackagesPage] Package ${index + 1} (${pkg.title}):`, {
+                      id: pkg.id,
+                      activityTypes: pkg.activityTypes,
+                      activityTypesCount: pkg.activityTypes?.length || 0,
+                      activityTypesArray: Array.isArray(pkg.activityTypes) ? pkg.activityTypes : 'NOT AN ARRAY'
+                    });
+                  }
+                  
                   // Get image source - use transformed image field or fallback
                   const fallbackImage = 'https://images.unsplash.com/photo-1512343879784-a960bf40e5f1?q=80&w=800&h=600&fit=crop';
                   let imageSrc = pkg.image || pkg.hero_image || pkg.thumbnail || fallbackImage;

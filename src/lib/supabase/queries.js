@@ -120,6 +120,7 @@ export async function getPackages(filters = {}) {
     const packageIds = (data || []).map(pkg => pkg.id);
     const activityTypesMap = await getPackagesActivityTypes(packageIds);
     console.log('🎯 [getPackages] Activity types fetched:', Object.keys(activityTypesMap).length, 'packages');
+    console.log('🎯 [getPackages] Activity types map sample:', Object.entries(activityTypesMap).slice(0, 3));
 
     // Transform data to match component expectations
     const transformed = (data || []).map((pkg, index) => {
@@ -158,7 +159,7 @@ export async function getPackages(filters = {}) {
         hero_image: pkg.hero_image,
         thumbnail: pkg.thumbnail,
         highlights: pkg.highlights || [],
-        activityTypes: activityTypesMap[pkg.id] || [], // Unique activity types from itinerary
+        activityTypes: activityTypesMap[String(pkg.id)] || activityTypesMap[pkg.id] || [], // Unique activity types from itinerary (try both string and original key)
         is_domestic: pkg.is_domestic || false,
         destinations: destination // Keep original destination object for compatibility
       };
@@ -170,7 +171,9 @@ export async function getPackages(filters = {}) {
           nights: transformedPkg.durationNights,
           days: transformedPkg.durationDays,
           duration: transformedPkg.duration,
-          hasImage: !!transformedPkg.image
+          hasImage: !!transformedPkg.image,
+          activityTypes: transformedPkg.activityTypes,
+          activityTypesCount: transformedPkg.activityTypes?.length || 0
         });
       }
 
@@ -341,39 +344,92 @@ export async function getPackageActivityTypes(packageId) {
 export async function getPackagesActivityTypes(packageIds) {
   try {
     if (!packageIds || packageIds.length === 0) {
+      console.warn('⚠️ [getPackagesActivityTypes] No package IDs provided');
       return {};
     }
+
+    console.log('🔍 [getPackagesActivityTypes] Fetching activities for packages:', {
+      packageCount: packageIds.length,
+      packageIds: packageIds.slice(0, 5) // Log first 5 IDs
+    });
 
     // Fetch all itinerary days for these packages
     const { data, error } = await supabase
       .from('itinerary_days')
-      .select('package_id, activities')
-      .in('package_id', packageIds);
+      .select('package_id, activities, day_number')
+      .in('package_id', packageIds)
+      .order('package_id', { ascending: true })
+      .order('day_number', { ascending: true });
 
     if (error) {
-      console.error('Error fetching activity types for packages:', error);
+      console.error('❌ [getPackagesActivityTypes] Error fetching activity types:', error);
       return {};
     }
 
     if (!data || data.length === 0) {
+      console.warn('⚠️ [getPackagesActivityTypes] No itinerary days found for packages');
       return {};
     }
 
+    console.log('📋 [getPackagesActivityTypes] Fetched itinerary days:', {
+      totalDays: data.length,
+      sampleDay: data[0] ? {
+        package_id: data[0].package_id,
+        day_number: data[0].day_number,
+        activitiesCount: Array.isArray(data[0].activities) ? data[0].activities.length : 0,
+        activitiesSample: Array.isArray(data[0].activities) ? data[0].activities.slice(0, 2) : data[0].activities
+      } : null
+    });
+
     // Group by package_id and extract unique activity types
     const activityTypesMap = {};
+    const packageDayCounts = {}; // Track how many days per package
 
     data.forEach(day => {
       const packageId = day.package_id;
-      if (!activityTypesMap[packageId]) {
-        activityTypesMap[packageId] = new Set();
+      // Ensure packageId is converted to string for consistent key matching
+      const packageIdKey = String(packageId);
+      
+      // Track day count
+      if (!packageDayCounts[packageIdKey]) {
+        packageDayCounts[packageIdKey] = 0;
+      }
+      packageDayCounts[packageIdKey]++;
+      
+      if (!activityTypesMap[packageIdKey]) {
+        activityTypesMap[packageIdKey] = new Set();
       }
 
-      if (day.activities && Array.isArray(day.activities)) {
-        day.activities.forEach(activity => {
-          if (activity && activity.type) {
-            activityTypesMap[packageId].add(activity.type);
+      // Check activities structure
+      if (day.activities) {
+        if (Array.isArray(day.activities)) {
+          // Activities is an array
+          day.activities.forEach(activity => {
+            if (activity && typeof activity === 'object') {
+              // Activity is an object with a 'type' property
+              if (activity.type) {
+                activityTypesMap[packageIdKey].add(activity.type);
+                console.log(`  ✅ [getPackagesActivityTypes] Added type "${activity.type}" from package ${packageIdKey}, day ${day.day_number}`);
+              } else {
+                console.warn(`  ⚠️ [getPackagesActivityTypes] Activity missing type:`, activity);
+              }
+            } else if (typeof activity === 'string') {
+              // Activity might be a string (type name directly)
+              activityTypesMap[packageIdKey].add(activity);
+              console.log(`  ✅ [getPackagesActivityTypes] Added type "${activity}" (string) from package ${packageIdKey}, day ${day.day_number}`);
+            }
+          });
+        } else if (typeof day.activities === 'object') {
+          // Activities might be a single object
+          if (day.activities.type) {
+            activityTypesMap[packageIdKey].add(day.activities.type);
+            console.log(`  ✅ [getPackagesActivityTypes] Added type "${day.activities.type}" (single object) from package ${packageIdKey}, day ${day.day_number}`);
           }
-        });
+        } else {
+          console.warn(`  ⚠️ [getPackagesActivityTypes] Unexpected activities structure for package ${packageIdKey}, day ${day.day_number}:`, typeof day.activities, day.activities);
+        }
+      } else {
+        console.log(`  ℹ️ [getPackagesActivityTypes] No activities for package ${packageIdKey}, day ${day.day_number}`);
       }
     });
 
@@ -383,9 +439,20 @@ export async function getPackagesActivityTypes(packageIds) {
       result[packageId] = Array.from(activityTypesMap[packageId]);
     });
 
+    console.log('🎯 [getPackagesActivityTypes] Final result:', {
+      totalPackages: Object.keys(result).length,
+      packageDayCounts: Object.entries(packageDayCounts).slice(0, 5),
+      sampleResults: Object.entries(result).slice(0, 5).map(([id, types]) => ({
+        packageId: id,
+        types: types,
+        typesCount: types.length
+      }))
+    });
+
     return result;
   } catch (error) {
-    console.error('Error in getPackagesActivityTypes:', error);
+    console.error('❌ [getPackagesActivityTypes] Error:', error);
+    console.error('❌ [getPackagesActivityTypes] Error stack:', error.stack);
     return {};
   }
 }
