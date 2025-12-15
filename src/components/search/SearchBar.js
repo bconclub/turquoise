@@ -11,20 +11,28 @@ export default function SearchBar() {
   const [topDestinations, setTopDestinations] = useState(['Goa', 'Andaman & Nicobar', 'Jordan']);
   const [loading, setLoading] = useState(true);
 
-  // Fetch top destinations on mount
+  // Fetch top destinations on mount - will be random each time
   useEffect(() => {
-    getTopDestinations(3)
-      .then(dests => {
+    const fetchDestinations = async () => {
+      try {
+        const dests = await getTopDestinations(3);
         if (dests && dests.length > 0) {
+          console.log('🎲 [SearchBar] Loaded random popular destinations:', dests);
           setTopDestinations(dests);
+        } else {
+          // Fallback if no destinations found
+          setTopDestinations(['Goa', 'Andaman & Nicobar', 'Jordan']);
         }
         setLoading(false);
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error loading top destinations:', error);
+        setTopDestinations(['Goa', 'Andaman & Nicobar', 'Jordan']); // Fallback
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+    
+    fetchDestinations();
+  }, []); // Empty deps - runs once on mount, but function is random each time
 
   const handleSearch = () => {
     setIsModalOpen(true);

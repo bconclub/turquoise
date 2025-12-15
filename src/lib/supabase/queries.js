@@ -271,25 +271,87 @@ export async function getDestinations() {
 }
 
 /**
- * Get top 3 most searched/popular destinations
- * Based on package count and featured status
+ * Get top destinations based on package count
+ * Returns random selection from destinations with most packages
  */
 export async function getTopDestinations(limit = 3) {
   try {
-    const { data, error } = await supabase
-      .from('destinations')
-      .select('id, name, slug, is_featured')
-      .eq('is_active', true)
-      .order('is_featured', { ascending: false })
-      .order('name', { ascending: true })
-      .limit(limit);
+    // First, get all active packages with their destination_id
+    const { data: packages, error: packagesError } = await supabase
+      .from('packages')
+      .select('destination_id')
+      .eq('is_active', true);
 
-    if (error) {
-      console.error('Error fetching top destinations:', error);
+    if (packagesError) {
+      console.error('Error fetching packages for top destinations:', packagesError);
       return [];
     }
 
-    return (data || []).map(dest => dest.name);
+    // Count packages per destination
+    const destinationCounts = {};
+    (packages || []).forEach(pkg => {
+      if (pkg.destination_id) {
+        destinationCounts[pkg.destination_id] = (destinationCounts[pkg.destination_id] || 0) + 1;
+      }
+    });
+
+    // Get all active destinations
+    const { data: destinations, error: destinationsError } = await supabase
+      .from('destinations')
+      .select('id, name, slug')
+      .eq('is_active', true);
+
+    if (destinationsError) {
+      console.error('Error fetching destinations:', destinationsError);
+      return [];
+    }
+
+    // Map destinations with their package counts
+    const destinationsWithCounts = (destinations || []).map(dest => ({
+      ...dest,
+      packageCount: destinationCounts[dest.id] || 0
+    }));
+
+    // Sort by package count (descending), then by name
+    destinationsWithCounts.sort((a, b) => {
+      if (b.packageCount !== a.packageCount) {
+        return b.packageCount - a.packageCount;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    // Get top destinations (those with packages)
+    const topDestinations = destinationsWithCounts.filter(dest => dest.packageCount > 0);
+
+    if (topDestinations.length === 0) {
+      console.warn('No destinations with packages found');
+      return [];
+    }
+
+    // Randomly select from top destinations
+    // Take top 15 (or all if less than 15) to have more variety
+    const topN = Math.min(15, topDestinations.length);
+    const topCandidates = topDestinations.slice(0, topN);
+    
+    // Fisher-Yates shuffle for better randomization
+    const shuffled = [...topCandidates];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    // Take first 'limit' items after shuffle
+    const selected = shuffled.slice(0, limit);
+
+    console.log('🎯 [getTopDestinations] Selected (randomized):', {
+      totalDestinations: destinationsWithCounts.length,
+      destinationsWithPackages: topDestinations.length,
+      topCandidatesCount: topCandidates.length,
+      selected: selected.map(d => ({ name: d.name, count: d.packageCount })),
+      timestamp: new Date().toISOString() // Helps verify it's a fresh call
+    });
+
+    return selected.map(dest => dest.name);
   } catch (error) {
     console.error('Error in getTopDestinations:', error);
     return [];
