@@ -336,7 +336,10 @@ export default function ImportPage() {
 
     setAddingDestLoading(true);
     try {
+      console.log('Creating destination:', newDestinationName.trim());
       const newDest = await createDestination(newDestinationName.trim());
+      console.log('createDestination returned:', newDest);
+      
       if (newDest) {
         await loadDestinations();
         setSelectedDestination(newDest.id);
@@ -344,7 +347,21 @@ export default function ImportPage() {
         setNewDestinationName('');
         alert(`Destination "${newDest.name}" added successfully!`);
       } else {
-        alert('Failed to create destination. It might already exist.');
+        // Check if destination already exists in database
+        const existingDests = await getDestinations();
+        const exists = existingDests.find(d => 
+          d.name.toLowerCase() === newDestinationName.trim().toLowerCase() ||
+          d.slug === newDestinationName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+        );
+        
+        if (exists) {
+          alert(`Destination "${newDestinationName.trim()}" already exists. Please select it from the dropdown.`);
+          setSelectedDestination(exists.id);
+          setIsAddingDestination(false);
+          setNewDestinationName('');
+        } else {
+          alert('Failed to create destination. It might already exist.');
+        }
       }
     } catch (error) {
       console.error('Error creating destination:', error);

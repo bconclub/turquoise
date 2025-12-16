@@ -982,9 +982,18 @@ See attached schema and types for data structure.
 
 # Turquoise MD - Current Implementation Status
 
-**Last Updated:** January 2025
+**Last Updated:** December 15, 2025
 
-**Deployment:** VPS deployment infrastructure configured with GitHub Actions, PM2, and Nginx
+**Latest Build Details:**
+- **Version:** v1.30
+- **Build Commit:** 134fbbe8afbdb7ddee15d53f0fa3365aecb99576
+- **Build Date:** December 15, 2025, 14:07:19 IST
+- **Built By:** bconclub (bconclubx@gmail.com)
+- **Package Version:** 0.1.0
+- **Node.js:** 20.x (required)
+- **Next.js:** 16.0.6
+- **React:** 19.2.0
+- **Deployment:** VPS deployment infrastructure configured with GitHub Actions, PM2, and Nginx
 
 **Recent Updates:**
 - ✅ SEO metadata implemented for all pages (static and dynamic)
@@ -1016,6 +1025,45 @@ See attached schema and types for data structure.
 - **Forms:** React Hook Form 7.67.0 + Zod 4.1.13
 - **Fonts:** Playfair Display, DM Sans, El Messiri (via next/font)
 - **AI Integration:** Anthropic Claude API (for document parsing & content generation)
+
+### Dependency Versions (Latest Build)
+
+**Core Dependencies:**
+- `next`: 16.0.6
+- `react`: 19.2.0
+- `react-dom`: 19.2.0
+- `@supabase/supabase-js`: ^2.86.0
+- `framer-motion`: ^12.23.25
+- `react-hook-form`: ^7.67.0
+- `zod`: ^4.1.13
+
+**AI & Processing:**
+- `@anthropic-ai/sdk`: ^0.24.1
+- `mammoth`: ^1.11.0 (Word document parsing)
+
+**UI & Icons:**
+- `lucide-react`: ^0.555.0
+- `@hugeicons/react`: ^1.1.1
+- `@hugeicons/core-free-icons`: ^2.0.0
+
+**Utilities:**
+- `browser-image-compression`: ^2.0.2
+- `clsx`: ^2.1.1
+- `date-fns`: ^4.1.0
+- `tailwind-merge`: ^3.4.0
+
+**Dev Dependencies:**
+- `tailwindcss`: ^4
+- `@tailwindcss/postcss`: ^4
+- `eslint`: ^9
+- `eslint-config-next`: 16.0.6
+
+**Build Configuration:**
+- **Node.js Required:** 20.x
+- **Package Manager:** npm
+- **Build Command:** `npm run build`
+- **Start Command:** `npm start` (via PM2)
+- **Deployment:** VPS with PM2 process manager
 
 ## Project Structure (Current)
 
@@ -1428,6 +1476,13 @@ turquoise/
   - Error logging to localStorage for debugging
 
 ### Build & System Information
+
+- ✅ **Current Build Details**
+  - **Version:** v1.30
+  - **Commit Hash:** 134fbbe8afbdb7ddee15d53f0fa3365aecb99576
+  - **Build Date:** December 15, 2025, 14:07:19 IST
+  - **Built By:** bconclub (bconclubx@gmail.com)
+  - **Package Version:** 0.1.0
 
 - ✅ **Build Info** (`src/lib/buildInfo.js`)
   - Exports `BUILD_TIME` from `NEXT_PUBLIC_BUILD_TIME` environment variable

@@ -169,11 +169,19 @@ export default function EditDestination() {
           console.error('Error creating destination:', error);
           throw error;
         }
+
+        if (!data) {
+          throw new Error('Destination was created but no data was returned');
+        }
+
         result = data;
         alert('Destination created successfully!');
       } else {
         // Update existing destination
         result = await updateDestination(destinationId, dataToSave);
+        if (!result) {
+          throw new Error('Destination was updated but no data was returned');
+        }
         alert('Destination updated successfully!');
       }
 

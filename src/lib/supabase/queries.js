@@ -1299,10 +1299,18 @@ export async function createDestination(name) {
       .select()
       .single();
 
+    console.log('Insert result:', { data, error });
+
     if (error) {
       console.error('Supabase error creating destination:', error);
       throw error;
     }
+
+    if (!data) {
+      console.warn('⚠️ Destination insert succeeded but no data returned');
+      return null;
+    }
+
     return data;
   } catch (error) {
     console.error('Error creating destination:', error);
